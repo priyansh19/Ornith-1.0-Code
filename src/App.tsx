@@ -5,7 +5,7 @@ import Inspector from './components/Inspector'
 import './App.css'
 
 export default function App() {
-  const { mode, switchMode, messages, loading, inspector, send, clear } = useChat()
+  const { mode, switchMode, messages, loading, inspector, steps, send, clear } = useChat()
   const [input, setInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -40,7 +40,7 @@ export default function App() {
 
       <div className="body">
         <ChatPanel messages={messages} loading={loading} />
-        <Inspector state={inspector} />
+        <Inspector state={inspector} steps={steps} />
       </div>
 
       <div className="input-bar">
