@@ -1,0 +1,47 @@
+name: Desktop build
+
+# Produces installers on each OS's native runner:
+#   Windows → .exe (NSIS)   ·   macOS → .dmg   ·   Linux → .AppImage
+# Trigger manually (Actions tab → Run workflow) or by pushing a v* tag.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build desktop app
+        run: npm run desktop:build
+        env:
+          # unsigned builds (no Apple/Windows certs configured)
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: lmchat-${{ matrix.os }}
+          if-no-files-found: ignore
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage

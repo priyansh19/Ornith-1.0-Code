@@ -1,0 +1,24 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Semantic & Severity" subtitle="Terminal status colors → critique severity" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="../../styles.css"/>
+<style>
+  body{padding:18px}
+  .row{display:flex;gap:12px;margin-bottom:12px}
+  .sw{flex:1;border-radius:var(--radius-md);border:1px solid var(--border);padding:11px;height:60px;display:flex;flex-direction:column;justify-content:flex-end;gap:1px}
+  .n{font-family:var(--font-sans);font-size:12px;font-weight:600}
+  .h{font-family:var(--font-mono);font-size:10.5px;opacity:.85}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:4px 9px;border-radius:var(--radius-xs);border:1px solid}
+  .d{width:7px;height:7px;border-radius:2px;background:currentColor}
+</style></head><body>
+  <div class="row">
+    <div class="sw" style="background:var(--green-soft);color:var(--green)"><span class="n">green</span><span class="h">success · assistant</span></div>
+    <div class="sw" style="background:var(--cyan-soft);color:var(--cyan)"><span class="n">cyan</span><span class="h">info · user</span></div>
+    <div class="sw" style="background:var(--amber-soft);color:var(--amber)"><span class="n">amber</span><span class="h">warning</span></div>
+    <div class="sw" style="background:var(--red-soft);color:var(--red)"><span class="n">red</span><span class="h">error</span></div>
+  </div>
+  <div class="row" style="margin-bottom:0">
+    <span class="chip" style="color:var(--red);background:var(--red-soft);border-color:var(--red)"><span class="d"></span>blocker</span>
+    <span class="chip" style="color:var(--amber);background:var(--amber-soft);border-color:var(--amber)"><span class="d"></span>major</span>
+    <span class="chip" style="color:var(--cyan);background:var(--cyan-soft);border-color:var(--cyan)"><span class="d"></span>minor</span>
+    <span class="chip" style="color:var(--muted);background:var(--surface-3);border-color:var(--border-strong)"><span class="d"></span>info</span>
+  </div>
+</body></html>

@@ -1,0 +1,43 @@
+/* ============================================================
+   LMChat — Spacing, radius, sizing tokens
+   Base unit 4px. Compact, dense developer-tool rhythm.
+   ============================================================ */
+
+:root {
+  /* ---- Spacing scale (4px base) ---- */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+
+  /* ---- Radius ---- */
+  --radius-xs:   3px;   /* chips, inline tags */
+  --radius-sm:   5px;   /* small controls */
+  --radius-md:   8px;   /* buttons, inputs, cards (default) */
+  --radius-lg:   12px;  /* panels, dialogs */
+  --radius-xl:   16px;  /* large surfaces, hero cards */
+  --radius-pill: 9999px;
+  --radius-full: 50%;
+
+  /* ---- Control sizing ---- */
+  --control-sm: 28px;
+  --control-md: 34px;   /* default button / input height */
+  --control-lg: 40px;
+
+  /* ---- Layout ---- */
+  --bar-height:    44px;   /* top bar, input bar */
+  --sidebar-width: 248px;
+  --inspector-width: 320px;
+  --content-max:   1200px;
+
+  /* ---- Hit target ---- */
+  --tap-min: 44px;
+}

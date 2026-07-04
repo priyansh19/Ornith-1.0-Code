@@ -1,0 +1,39 @@
+/* ============================================================
+   LMChat — Borders, shadows, motion, focus
+   Depth comes mostly from surface contrast + hairline borders;
+   shadows are soft and used sparingly on floating layers.
+   ============================================================ */
+
+:root {
+  /* ---- Borders ---- */
+  --border-width: 1px; /* @kind other */
+  --border-hairline: 1px solid var(--border);
+  --border-emphasis: 1px solid var(--border-strong);
+
+  /* ---- Shadows (floating layers only) ---- */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg:  0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.5);
+
+  /* ---- Glow (accent emphasis on dark) ---- */
+  --glow-brand: 0 0 0 1px rgba(224, 108, 58, 0.5), 0 0 24px -6px rgba(224, 108, 58, 0.45);
+  --glow-agent: 0 0 0 1px rgba(124, 106, 247, 0.5), 0 0 24px -6px rgba(124, 106, 247, 0.45);
+
+  /* ---- Focus ring ---- */
+  --ring-width: 2px; /* @kind other */
+  --ring-offset: 2px; /* @kind other */
+  --ring: 0 0 0 var(--ring-width) var(--bg), 0 0 0 calc(var(--ring-width) + 2px) var(--focus-ring);
+  --ring-inset: inset 0 0 0 1px var(--focus-ring);
+
+  /* ---- Motion ---- */
+  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --dur-fast:   120ms; /* @kind other */
+  --dur-base:   180ms; /* @kind other */
+  --dur-slow:   320ms; /* @kind other */
+
+  /* ---- Scrim / overlay ---- */
+  --scrim: rgba(8, 8, 10, 0.66); /* @kind color */
+  --blur:  saturate(140%) blur(12px); /* @kind other */
+}

@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x170" name="Surfaces & Neutrals" subtitle="Canvas → elevated surfaces, borders, text" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="../../styles.css"/>
+<style>
+  body{padding:18px}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .sw{border-radius:var(--radius-sm);border:1px solid var(--border);height:62px;display:flex;align-items:flex-end;padding:7px}
+  .h{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+  .lbl{font-family:var(--font-mono);font-size:11px;color:var(--text-soft);margin:3px 2px 0}
+  .txtrow{display:flex;gap:18px;margin-top:14px;align-items:baseline}
+  .t{font-family:var(--font-sans);font-size:14px}
+</style></head><body>
+  <div class="grid">
+    <div><div class="sw" style="background:var(--bg)"></div><div class="lbl">bg</div></div>
+    <div><div class="sw" style="background:var(--bg-inset)"></div><div class="lbl">bg-inset</div></div>
+    <div><div class="sw" style="background:var(--surface)"></div><div class="lbl">surface</div></div>
+    <div><div class="sw" style="background:var(--surface-2)"></div><div class="lbl">surface-2</div></div>
+    <div><div class="sw" style="background:var(--surface-3)"></div><div class="lbl">surface-3</div></div>
+    <div><div class="sw" style="background:var(--border-strong)"></div><div class="lbl">border</div></div>
+  </div>
+  <div class="txtrow">
+    <span class="t" style="color:var(--text)">text</span>
+    <span class="t" style="color:var(--text-soft)">text-soft</span>
+    <span class="t" style="color:var(--muted)">muted</span>
+    <span class="t" style="color:var(--faint)">faint</span>
+  </div>
+</body></html>

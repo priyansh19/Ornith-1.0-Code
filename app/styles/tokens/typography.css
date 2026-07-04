@@ -1,0 +1,42 @@
+/* ============================================================
+   LMChat — Typography tokens
+   Display: Space Grotesk (techy geometric grotesk, wordmark + headings)
+   UI/Body: IBM Plex Sans (humanist-technical, screen body)
+   Mono:    JetBrains Mono (code, terminal, inspector data, model IDs)
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display: 'Space Grotesk', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-sans:    'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+
+  /* ---- Weights ---- */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  /* ---- Type scale (size / line-height) ---- */
+  --text-display:  44px;  --lh-display:  1.04; /* hero / big numerals */
+  --text-h1:       32px;  --lh-h1:       1.12;
+  --text-h2:       24px;  --lh-h2:       1.18;
+  --text-h3:       19px;  --lh-h3:       1.3;
+  --text-title:    16px;  --lh-title:    1.4;  /* card / panel titles */
+  --text-body:     14px;  --lh-body:     1.55; /* default UI body */
+  --text-sm:       13px;  --lh-sm:       1.5;  /* dense UI, chat */
+  --text-mono:     13px;  --lh-mono:     1.6;  /* code, terminal */
+  --text-caption:  12px;  --lh-caption:  1.4;  /* labels, metadata */
+  --text-micro:    10.5px;--lh-micro:    1.3;  /* uppercase eyebrows */
+
+  /* ---- Tracking ---- */
+  --tracking-tight:   -0.02em; /* display headings */
+  --tracking-normal:  0;
+  --tracking-wide:    0.04em;   /* small labels */
+  --tracking-caps:    0.12em;   /* uppercase eyebrows / bubble labels */
+
+  /* ---- Semantic roles ---- */
+  --type-heading-family: var(--font-display);
+  --type-body-family:    var(--font-sans);
+  --type-code-family:    var(--font-mono);
+}

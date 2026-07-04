@@ -1,0 +1,16 @@
+<!-- @dsCard group="Type" viewport="700x200" name="Type scale" subtitle="display → micro, with tokens" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="../../styles.css"/>
+<style>
+  body{padding:18px 20px}
+  .r{display:flex;align-items:baseline;gap:16px;padding:4px 0;border-bottom:1px solid var(--border)}
+  .r:last-child{border:none}
+  .s{font-family:var(--font-display);color:var(--text);font-weight:500;letter-spacing:-.02em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tok{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);width:120px;text-align:right;flex-shrink:0}
+</style></head><body>
+  <div class="r"><span class="s" style="font-size:32px">Heading one</span><span class="tok">--text-h1 / 32</span></div>
+  <div class="r"><span class="s" style="font-size:24px">Heading two</span><span class="tok">--text-h2 / 24</span></div>
+  <div class="r"><span class="s" style="font-size:19px">Heading three</span><span class="tok">--text-h3 / 19</span></div>
+  <div class="r"><span class="s" style="font-size:16px;font-family:var(--font-sans)">Title / panel</span><span class="tok">--text-title / 16</span></div>
+  <div class="r"><span class="s" style="font-size:14px;font-family:var(--font-sans);font-weight:400;color:var(--text-soft)">Body — default UI text</span><span class="tok">--text-body / 14</span></div>
+  <div class="r"><span class="s" style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">caption · metadata</span><span class="tok">--text-caption / 12</span></div>
+</body></html>

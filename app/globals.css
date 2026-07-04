@@ -1,0 +1,14 @@
+/* ============================================================
+   LMChat — global stylesheet entry point
+   Imports the token + base + component + layout closure in order.
+   Mirrors the design system's single-styles.css philosophy.
+   Webfonts are loaded via <link> in app/layout.tsx.
+   ============================================================ */
+
+@import "./styles/tokens/colors.css";
+@import "./styles/tokens/typography.css";
+@import "./styles/tokens/spacing.css";
+@import "./styles/tokens/effects.css";
+@import "./styles/tokens/base.css";
+@import "./styles/components.css";
+@import "./styles/lmchat.css";
