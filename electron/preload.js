@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   pickDirectory: () => ipcRenderer.invoke("pick-directory"),
 });
 
-window.addEventListener("DOMContentLoaded", () => {
-  document.documentElement.dataset.lmchatDesktop = "1";
-});
+// NOTE: deliberately no DOM mutation here. Stamping an attribute on <html>
+// at preload time made the server-rendered HTML differ from the client DOM
+// and triggered a React hydration mismatch on every launch. The UI detects
+// Electron via window.electronAPI (useIsElectron) instead.

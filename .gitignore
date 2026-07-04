@@ -37,3 +37,9 @@ next-env.d.ts
 
 # local agent worktrees (never commit)
 /.claude/worktrees/
+
+# agent sandbox
+workspace/
+.env
+__pycache__/
+*.pyc

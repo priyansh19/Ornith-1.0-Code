@@ -1,0 +1,7 @@
+requests
+langfuse>=2,<3
+fastapi
+uvicorn
+langgraph
+langchain-core
+langchain-ollama
