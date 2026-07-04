@@ -27,11 +27,22 @@ def _load_harness(dir_name: str):
     finally:
         sys.path.remove(base)
 
-# Standalone build: this repo ships ONLY the ornith-native loop (the UI has
-# no harness concept). The 12 learning-phase harnesses live in the
-# Mach-2-Agent-Harness repo; the registry shape is kept so the two servers
-# stay drop-in compatible.
+# Full registry: every harness built across the project is registered and
+# reachable via the API (`/harnesses`, `harness` field on /chat-stream).
+# The desktop UI always drives "ornith" (the self-scaffolding-native loop,
+# the default); the others remain available to any API client.
 HARNESSES = {
+    "agent-base": _load_harness("p1-agent-base"),
+    "harness": _load_harness("p2-harness"),
+    "research": _load_harness("p6-specialization"),
+    "a2a": _load_harness("p4-agent-to-agent"),
+    "memory": _load_harness("p5-memory"),
+    "langgraph": _load_harness("p7-langgraph"),
+    "plan-execute": _load_harness("p8-plan-execute"),
+    "supervisor": _load_harness("p9-supervisor"),
+    "rag": _load_harness("p10-rag"),
+    "structured": _load_harness("p11-structured"),
+    "apex": _load_harness("p12-apex"),
     "ornith": _load_harness("p13-ornith"),
 }
 DEFAULT_HARNESS_ID = "ornith"

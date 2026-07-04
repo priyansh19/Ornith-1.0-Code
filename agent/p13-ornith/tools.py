@@ -169,8 +169,18 @@ def web_search(query: str) -> str:
 @tool
 def wikipedia(query: str) -> str:
     """Look up a topic on Wikipedia and return a short summary."""
+    # Direct REST call — the `wikipedia` pip package intermittently fails
+    # with JSON parse errors ("Expecting value: line 1 column 1"), confirmed
+    # in live diagnostics. The official REST summary endpoint is reliable.
     try:
-        return wiki_lib.summary(query, sentences=6)
+        r = requests.get(
+            f"https://en.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(query)}",
+            headers={"User-Agent": "Mach2-Agent/1.0"}, timeout=10,
+        )
+        if r.status_code == 404:
+            return f"No Wikipedia page found for '{query}'."
+        data = r.json()
+        return f"{data.get('title', query)}: {data.get('extract', 'No summary available.')}"
     except Exception as e:
         return f"Wikipedia error: {e}"
 
