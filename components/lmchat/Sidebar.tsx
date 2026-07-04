@@ -58,10 +58,6 @@ function SessionRow({
   onCommitRename: (v: string) => void;
   onCancelRename: () => void;
 }) {
-  // "waiting" = paused on an approval gate — the single state that most
-  // needs a glanceable, distinct-from-idle affordance in the sidebar, since
-  // it means the session needs the user to come back and act.
-  const needsAttention = s.run.status === "waiting";
   const live = s.run.status === "running" || s.run.status === "streaming";
   return (
     <div
@@ -78,11 +74,6 @@ function SessionRow({
       ) : (
         <button className="lm-ses__hit" onClick={() => onSelect(s.id)} title={s.title}>
           <span className="lm-ses__title">{s.title}</span>
-          {needsAttention && (
-            <span className="lm-ses__attn" aria-label="waiting for your approval" title="Waiting for your approval">
-              <Icon name="circle-alert" size={12} />
-            </span>
-          )}
           {live && (
             <span className="lm-ses__live" aria-label="run in progress" title="Run in progress" />
           )}

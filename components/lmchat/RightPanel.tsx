@@ -5,7 +5,6 @@ import { TraceTree } from "./TraceTree";
 import { WorkspacePanel } from "./WorkspacePanel";
 import {
   formatRunDuration,
-  type CtxFile,
   type Insp,
   type Provider,
   type SessionRun,
@@ -52,7 +51,6 @@ export interface RightPanelProps {
   model: string;
   provider: Provider;
   project: string | null;
-  attached: CtxFile[];
   run: SessionRun; // the ACTIVE session's live run
   focusSpan?: string;
   /** User-adjustable width in px (drag handle in LMChatApp) — falls back to
@@ -71,7 +69,6 @@ export function RightPanel({
   model,
   provider,
   project,
-  attached,
   run,
   focusSpan,
   width,
@@ -79,9 +76,7 @@ export function RightPanel({
   const inFlight =
     run.status === "running" ||
     run.status === "streaming" ||
-    run.status === "waiting" ||
-    insp.status === "running" ||
-    insp.status === "waiting";
+    insp.status === "running";
 
   return (
     <aside
@@ -154,7 +149,6 @@ export function RightPanel({
             model={model}
             provider={provider}
             project={project}
-            attached={attached}
           />
         </div>
 

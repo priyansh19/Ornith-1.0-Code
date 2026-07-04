@@ -2,7 +2,6 @@ import * as React from "react";
 import { Icon, IconButton, Tooltip } from "@/components/ds";
 
 const WORKSPACE_URL = "http://localhost:8000/workspace/files";
-const CHECKPOINTS_URL = "http://localhost:8000/checkpoints";
 
 type Status = "loading" | "unavailable" | "malformed" | "ok";
 
@@ -51,54 +50,6 @@ function TreeRow({ node, depth }: { node: TreeNode; depth: number }) {
       ))}
     </>
   );
-}
-
-interface Checkpoint {
-  id: string;
-  file: string;
-  created_at: string;
-}
-
-function formatTimestamp(value: string | undefined): string {
-  if (!value) return "unknown time";
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
-}
-
-/** Fetches `url`, validating the response shape before rendering. Never
-    fabricates data — distinguishes "endpoint doesn't exist yet" (network
-    error / non-2xx) from "endpoint responded but the shape was wrong"
-    (fetched fine, but the expected array field wasn't an array). */
-function useEndpointList<T>(url: string, field: string, refreshKey: number) {
-  const [items, setItems] = React.useState<T[]>([]);
-  const [status, setStatus] = React.useState<Status>("loading");
-
-  React.useEffect(() => {
-    let cancelled = false;
-    setStatus("loading");
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error("unavailable");
-        return r.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        if (!Array.isArray(data?.[field])) {
-          setStatus("malformed");
-          return;
-        }
-        setItems(data[field]);
-        setStatus("ok");
-      })
-      .catch(() => {
-        if (!cancelled) setStatus("unavailable");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [url, field, refreshKey]);
-
-  return { items, status };
 }
 
 function RefreshButton({ onClick, refreshing }: { onClick: () => void; refreshing: boolean }) {
@@ -170,8 +121,8 @@ function WorkspaceFilesSection() {
         {status === "loading" && <p className="lm-dim lm-ws__msg">{refreshKey > 0 ? "Refreshing…" : "Loading workspace…"}</p>}
         {status === "unavailable" && (
           <p className="lm-dim lm-ws__msg">
-            Backend endpoint <code>GET /workspace/files</code> isn&apos;t implemented yet — this
-            panel is ready as soon as it is.
+            Couldn&apos;t reach <code>GET /workspace/files</code> on the backend — check that
+            the server on :8000 is running.
           </p>
         )}
         {status === "malformed" && (
@@ -202,57 +153,13 @@ function WorkspaceFilesSection() {
   );
 }
 
-function CheckpointsSection() {
-  const [refreshKey, setRefreshKey] = React.useState(0);
-  const { items: checkpoints, status } = useEndpointList<Checkpoint>(CHECKPOINTS_URL, "checkpoints", refreshKey);
-
-  return (
-    <div className="lm-ws__section">
-      <div className="lm-ws__head">
-        <span className="lm-ws__title">
-          <Icon name="history" size={13} /> Checkpoints
-        </span>
-        <RefreshButton onClick={() => setRefreshKey((k) => k + 1)} refreshing={status === "loading"} />
-      </div>
-      <div aria-live="polite">
-        {status === "loading" && <p className="lm-dim lm-ws__msg">{refreshKey > 0 ? "Refreshing…" : "Loading checkpoints…"}</p>}
-        {status === "unavailable" && (
-          <p className="lm-dim lm-ws__msg">
-            No checkpoint system on the backend yet — once file edits snapshot before writing,
-            restorable versions will list here.
-          </p>
-        )}
-        {status === "malformed" && (
-          <p className="lm-dim lm-ws__msg">
-            Backend responded, but the data wasn&apos;t shaped as expected — check the server response.
-          </p>
-        )}
-        {status === "ok" && checkpoints.length === 0 && <p className="lm-dim lm-ws__msg">No checkpoints yet.</p>}
-        {status === "ok" && checkpoints.length > 0 && (
-          <ul className="lm-ws__list">
-            {checkpoints.map((c) => (
-              <li key={c.id}>
-                <Icon name="history" size={13} /> {c.file} — {formatTimestamp(c.created_at)}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Workspace files + Checkpoints — both real UI shells waiting on backend
-    endpoints that don't exist yet (GET /workspace/files, GET /checkpoints).
-    Renders an honest "not implemented yet" state rather than any fabricated
-    data, exactly mirroring the pattern already established elsewhere in this
-    project (e.g. ContextMeter, InspectorBody's live-only fields). */
+/** Workspace browser — the agent's real working tree, fetched live from the
+    backend's GET /workspace/files. Never fabricates data: an unreachable or
+    malformed response renders an honest message instead. */
 export function WorkspacePanel() {
   return (
     <div className="lm-ws">
       <WorkspaceFilesSection />
-      <div className="lm-ws__divider" />
-      <CheckpointsSection />
     </div>
   );
 }

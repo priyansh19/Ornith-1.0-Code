@@ -58,12 +58,8 @@ export function HelpModal({ onClose }: HelpModalProps) {
               the <b>Workspace</b> browser.
             </li>
             <li>
-              <b>Approve file writes</b> — proposed edits show as a diff you
-              approve or reject (change the tier next to the composer).
-            </li>
-            <li>
-              <b>Tune anything</b>: models, attached context files, and the
-              Ollama URL in Settings.
+              <b>Tune anything</b>: models (loaded and unloaded live in
+              Ollama) and the Ollama URL in Settings.
             </li>
           </ol>
 

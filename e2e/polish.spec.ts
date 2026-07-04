@@ -45,15 +45,3 @@ test.describe("Live timestamps", () => {
   });
 });
 
-test.describe("Composer microcopy", () => {
-  test("the mode selector exposes the permission tiers", async ({ page }) => {
-    // The composer toolbar carries the permission-tier selector (styled as a
-    // brand mode pill). It defaults to "Ask" and can switch to "Full-auto".
-    const select = page.locator(".lm-composer__permsel select");
-    await expect(select).toBeVisible();
-    await expect(select.locator("option")).toContainText([
-      "Ask",
-      "Full-auto",
-    ]);
-  });
-});

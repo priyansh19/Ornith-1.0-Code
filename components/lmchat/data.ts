@@ -18,7 +18,7 @@ export interface Folder {
   name: string;
 }
 
-export type InspStatus = "idle" | "running" | "waiting" | "done";
+export type InspStatus = "idle" | "running" | "done";
 
 export interface Insp {
   status: InspStatus;
@@ -39,20 +39,10 @@ export interface Insp {
   runTotalMs?: number;
 }
 
-export interface PerfStats {
-  ttft: string; // time to first token, e.g. "0.38s"
-  tps: number; // decode tokens/sec
-  promptTok: number;
-  outTok: number;
-  model: string; // e.g. "ornith:9b · q4"
-  device: "GPU" | "CPU" | "spill";
-}
-
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   pending?: boolean;
-  perf?: PerfStats;
   /** the turn failed (e.g. the backend errored) — shows Retry/Continue */
   error?: boolean;
   /** the turn was aborted mid-stream by the user (Stop / Escape) */
@@ -68,19 +58,7 @@ export interface ToolMessage {
   steps?: Step[];
 }
 
-export interface ApprovalMessage {
-  type: "approval";
-  status: "pending" | "approved" | "rejected";
-  path: string;
-  added: string[];
-  removed: string[];
-  /** set once a response to /approve has been attempted — surfaces an honest
-      failure notice instead of silently no-oping (the endpoint isn't wired
-      up server-side yet). */
-  networkNotice?: string;
-}
-
-export type Message = ChatMessage | ToolMessage | ApprovalMessage;
+export type Message = ChatMessage | ToolMessage;
 
 // ── Step trace (live ReAct feed) ──────────────────────────
 // Tool kinds that write or execute — get the amber "writes/executes" badge.
@@ -116,20 +94,11 @@ export type Step =
       tool: string;
       input: string;
       result: string;
-      blocked?: boolean;
-      diff?: string;
-    }
-  | {
-      type: "approval_required";
-      tool: string;
-      input: string;
       diff?: string;
     };
 
 export const isToolMessage = (m: Message): m is ToolMessage =>
   "type" in m && m.type === "tool";
-export const isApprovalMessage = (m: Message): m is ApprovalMessage =>
-  "type" in m && m.type === "approval";
 
 /** Flattened searchable text for a tool-activity row (summary + item labels +
     step trace) — so search matches step/tool-call content, not just replies. */
@@ -145,11 +114,10 @@ function toolSearchText(m: ToolMessage): string {
   return `${m.summary ?? ""} ${items} ${steps}`;
 }
 
-/** Every plain-text form a message can match against — reply content, tool
-    summary/items/steps, or an approval's file path. */
+/** Every plain-text form a message can match against — reply content, or a
+    tool row's summary/items/steps. */
 export function messageSearchText(m: Message): string {
   if (isToolMessage(m)) return toolSearchText(m);
-  if (isApprovalMessage(m)) return m.path;
   return m.content;
 }
 
@@ -187,20 +155,6 @@ export function searchSessions(sessions: Session[], query: string): SearchHit[] 
   return hits;
 }
 
-// Per-session permission tier (S1)
-export type PermTier = "ask" | "auto-read" | "allowlist" | "auto";
-export const PERM_TIERS: { value: PermTier; label: string; hint: string }[] = [
-  { value: "ask", label: "Ask", hint: "Approve every file write & shell run" },
-  { value: "auto-read", label: "Auto-read", hint: "Auto reads; approve writes & shell" },
-  { value: "allowlist", label: "Allowlist", hint: "Auto reads + allowlisted shell; approve writes" },
-  { value: "auto", label: "Full-auto", hint: "No prompts (use with care)" },
-];
-
-export interface CtxFile {
-  path: string;
-  tokens: number;
-}
-
 export interface Session {
   id: string;
   title: string;
@@ -210,8 +164,6 @@ export interface Session {
   project: string | null;
   messages: Message[];
   insp: Insp;
-  permTier: PermTier;
-  attached: CtxFile[];
   run: SessionRun;
   pinned?: boolean;
 }
@@ -285,56 +237,6 @@ export interface Span {
   children?: Span[];
 }
 
-// ── Model library — only backs the fallback context-window lookup (modelCtx,
-// used by ContextMeter); the real model picker/library (ModelsModal) is wired
-// to live Ollama data instead (see ollama.ts's listInstalledModelDetails). ──
-export interface ModelInfo {
-  name: string;
-  family: string;
-  sizeGB: number;
-  quant: string;
-  ctx: number;
-  params: string;
-  vramGB: number;
-  caps: { tools: boolean; vision: boolean };
-  pulled: boolean;
-}
-export const MODEL_LIBRARY: ModelInfo[] = [
-  { name: "ornith:9b", family: "Ornith", sizeGB: 5.4, quant: "Q4_K_M", ctx: 32768, params: "9B", vramGB: 7.2, caps: { tools: true, vision: false }, pulled: true },
-  { name: "gemma4:latest", family: "Gemma", sizeGB: 8.1, quant: "Q4_K_M", ctx: 16384, params: "12B", vramGB: 10.4, caps: { tools: true, vision: true }, pulled: true },
-  { name: "qwen3:8b", family: "Qwen", sizeGB: 4.9, quant: "Q4_K_M", ctx: 32768, params: "8B", vramGB: 6.6, caps: { tools: true, vision: false }, pulled: true },
-  { name: "nomic-embed-text", family: "Nomic", sizeGB: 0.3, quant: "F16", ctx: 8192, params: "137M", vramGB: 0.5, caps: { tools: false, vision: false }, pulled: true },
-  { name: "llama4:70b", family: "Llama", sizeGB: 40, quant: "Q4_K_M", ctx: 131072, params: "70B", vramGB: 44, caps: { tools: true, vision: true }, pulled: false },
-  { name: "phi5:mini", family: "Phi", sizeGB: 2.2, quant: "Q4_K_M", ctx: 16384, params: "3.8B", vramGB: 3.1, caps: { tools: false, vision: false }, pulled: false },
-];
-export const modelInfo = (name: string) => MODEL_LIBRARY.find((m) => m.name === name);
-export const modelCtx = (name: string) => modelInfo(name)?.ctx ?? 32768;
-
-// ── Context budget (C1) + @-mention files (C2) ──
-export interface CtxZone {
-  key: string;
-  label: string;
-  tokens: number;
-  color: string;
-}
-export function ctxZones(attachedTok: number): { zones: CtxZone[]; used: number } {
-  const zones: CtxZone[] = [
-    { key: "system", label: "System", tokens: 1200, color: "var(--muted)" },
-    { key: "history", label: "History", tokens: 4200, color: "var(--cyan)" },
-    { key: "tools", label: "Tool output", tokens: 2600, color: "var(--brand)" },
-    { key: "attached", label: "Attached", tokens: attachedTok, color: "var(--agent)" },
-    { key: "reserve", label: "Reserve", tokens: 1500, color: "var(--border-strong)" },
-  ];
-  return { zones, used: zones.reduce((n, z) => n + z.tokens, 0) };
-}
-export const CONTEXT_FILES: CtxFile[] = [
-  { path: "src/auth/session.py", tokens: 820 },
-  { path: "src/auth/tokens.py", tokens: 540 },
-  { path: "tests/auth/test_session.py", tokens: 610 },
-  { path: "README.md", tokens: 1200 },
-  { path: "docs/architecture.md", tokens: 2400 },
-];
-
 export interface Interval {
   t0: number;
   ms: number;
@@ -370,12 +272,10 @@ export function computeIntervals(root: Span): {
 }
 
 // Live run state, tracked PER SESSION so background runs keep going when the
-// user switches sessions. "waiting" = approval gate; "streaming" = reply
-// tokens landing.
+// user switches sessions. "streaming" = reply tokens landing.
 export type SessionRunStatus =
   | "idle"
   | "running"
-  | "waiting"
   | "streaming"
   | "done"
   | "stopped";

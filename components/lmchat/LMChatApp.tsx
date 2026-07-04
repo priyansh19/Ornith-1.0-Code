@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MessageBubble, ToolCall, Button, Icon, Tooltip } from "@/components/ds";
+import { MessageBubble, ToolCall, Icon, Tooltip } from "@/components/ds";
 import { TopBar } from "./TopBar";
 import type { NotificationItem } from "./NotificationBell";
 import { Composer, attachmentsToPrefix, type Attachment } from "./Composer";
@@ -13,7 +13,6 @@ import { HelpModal } from "./HelpModal";
 import { CommandPalette, type Command } from "./CommandPalette";
 import { RightPanel, type RightTab } from "./RightPanel";
 import { StepTrace } from "./StepTrace";
-import { DiffView } from "./DiffView";
 import { GlobalSearchResults } from "./GlobalSearchResults";
 import {
   FOLDERS,
@@ -22,17 +21,11 @@ import {
   SUGGEST,
   formatRunDuration,
   isToolMessage,
-  isApprovalMessage,
   messageMatchesQuery,
   searchSessions,
-  CONTEXT_FILES,
   IDLE_SESSION_RUN,
-  type ApprovalMessage,
-  type CtxFile,
   type Folder,
   type Insp,
-  type PerfStats,
-  type PermTier,
   type Provider,
   type SearchHit,
   type Session,
@@ -56,8 +49,6 @@ import {
 /** The user-facing name of the local model/agent every chat turn runs on. */
 const AGENT_LABEL = "Ornith";
 
-const APPROVE_URL = "http://localhost:8000/approve";
-
 const NEAR_BOTTOM_PX = 120;
 
 /** Desktop notification for a finished turn — only fires if the tab/window is
@@ -73,102 +64,6 @@ function notifyIfHidden(title: string, body: string) {
   } catch {
     /* ignore */
   }
-}
-
-function PerfStrip({ perf }: { perf: PerfStats }) {
-  return (
-    <div className="lm-perf" aria-label="response performance">
-      <span className="lm-perf__item">
-        <span className="lm-perf__k">TTFT</span> {perf.ttft}
-      </span>
-      <span className="lm-perf__sep">·</span>
-      <span className="lm-perf__item">
-        <b>{perf.tps}</b> tok/s
-      </span>
-      <span className="lm-perf__sep">·</span>
-      <span className="lm-perf__item">
-        {perf.promptTok}↑ / {perf.outTok}↓
-      </span>
-      <span className="lm-perf__sep">·</span>
-      <span className="lm-perf__item">{perf.model}</span>
-      <span className={`lm-perf__dev lm-perf__dev--${perf.device}`}>
-        {perf.device}
-      </span>
-    </div>
-  );
-}
-
-/** Renders the proposed edit as a unified diff so it flows through the same
-    DiffView the trace uses (square markers, Added/Removed summary, etc). */
-function unifiedDiffFor(msg: ApprovalMessage): string {
-  const lines = [
-    `--- a/${msg.path}`,
-    `+++ b/${msg.path}`,
-    "@@",
-    ...msg.removed.map((l) => `-${l}`),
-    ...msg.added.map((l) => `+${l}`),
-  ];
-  return lines.join("\n") + "\n";
-}
-
-function ApprovalCard({
-  msg,
-  onApprove,
-  onReject,
-}: {
-  msg: ApprovalMessage;
-  onApprove: () => void;
-  onReject: () => void;
-}) {
-  const pending = msg.status === "pending";
-  return (
-    <div className={`lm-appr lm-appr--${msg.status}`}>
-      <div className="lm-appr__head">
-        <span className="lm-appr__title">
-          <Icon name="file-pen" size={14} /> Proposed edit
-        </span>
-        <span className="lm-appr__path">{msg.path}</span>
-        {!pending && (
-          <span className={`lm-appr__badge lm-appr__badge--${msg.status}`}>
-            {msg.status}
-          </span>
-        )}
-      </div>
-      <DiffView diff={unifiedDiffFor(msg)} />
-      {pending && (
-        <div className="lm-appr__actions">
-          <Button
-            variant="primary"
-            size="sm"
-            iconLeft={<Icon name="check" size={14} />}
-            onClick={onApprove}
-          >
-            Approve &amp; write
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            iconLeft={<Icon name="x" size={14} />}
-            onClick={onReject}
-          >
-            Reject
-          </Button>
-        </div>
-      )}
-      {pending && (
-        <p className="lm-appr__note">
-          Backend approval gating isn&rsquo;t wired up yet — this UI is ready
-          for it. Approve/Deny currently no-ops until the agent loop supports
-          pausing for confirmation.
-        </p>
-      )}
-      {msg.networkNotice && (
-        <p className="lm-appr__notice">
-          <Icon name="circle-help" size={13} /> {msg.networkNotice}
-        </p>
-      )}
-    </div>
-  );
 }
 
 type Patch = Partial<Session> | ((s: Session) => Partial<Session>);
@@ -196,8 +91,6 @@ function seedSessions(): Session[] {
       lastActiveAt: Date.now(),
       messages: [],
       insp: { status: "idle" },
-      permTier: "ask",
-      attached: [],
       run: { ...IDLE_SESSION_RUN },
     },
   ];
@@ -644,9 +537,6 @@ export function LMChatApp() {
   // The "session started" gate — the start screen shows until a working
   // folder is picked; after that, every send goes straight to the backend.
   const started = !!(active && active.project);
-  const pendingApproval =
-    !!active &&
-    active.messages.some((m) => isApprovalMessage(m) && m.status === "pending");
 
   const activeRun = active ? active.run : IDLE_SESSION_RUN;
   const activeBusy =
@@ -699,8 +589,6 @@ export function LMChatApp() {
         lastActiveAt: Date.now(),
         messages: [],
         insp: { status: "idle" },
-        permTier: "ask",
-        attached: [],
         run: { ...IDLE_SESSION_RUN },
       },
       ...p,
@@ -777,22 +665,6 @@ export function LMChatApp() {
     notify(`Workspace moved to ${newDir}`);
   }
 
-  function setPermTier(t: PermTier) {
-    patchActive({ permTier: t });
-  }
-
-  function attachContext(f: CtxFile) {
-    patchActive((s) =>
-      s.attached.some((a) => a.path === f.path)
-        ? {}
-        : { attached: [...s.attached, f] },
-    );
-  }
-
-  function detachContext(path: string) {
-    patchActive((s) => ({ attached: s.attached.filter((a) => a.path !== path) }));
-  }
-
   function clearSession() {
     liveControllersRef.current.get(activeId)?.abort();
     liveControllersRef.current.delete(activeId);
@@ -866,9 +738,7 @@ export function LMChatApp() {
         project: active.project,
         model,
         provider: provider.url,
-        permTier: active.permTier,
       },
-      attached: active.attached,
       messages: active.messages,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -888,7 +758,7 @@ export function LMChatApp() {
     // Attachment content is prefixed onto the real outgoing text, but the
     // visible user bubble only ever shows what was actually typed.
     const body = (attachmentsToPrefix(files) + typed).trim();
-    if (!body || activeBusy || !started || pendingApproval) return;
+    if (!body || activeBusy || !started) return;
     const sid = activeId; // captured — background runs patch THIS session
     setInput("");
     setFiles([]);
@@ -1003,7 +873,7 @@ export function LMChatApp() {
             messages: s.messages.map((m) => {
               if (isToolMessage(m) && m.running)
                 return { type: "tool" as const, running: false, summary: `Done in ${formatRunDuration(totalMs)}`, items: m.items ?? [], steps: [...steps] };
-              if (!isToolMessage(m) && !isApprovalMessage(m) && m.role === "assistant" && m.pending)
+              if (!isToolMessage(m) && m.role === "assistant" && m.pending)
                 return { role: "assistant" as const, content: evt.answer };
               return m;
             }),
@@ -1022,7 +892,7 @@ export function LMChatApp() {
           messages: s.messages.map((m) => {
             if (isToolMessage(m) && m.running)
               return { type: "tool" as const, running: false, summary: `Failed after ${formatRunDuration(Date.now() - runStartedAt)}`, items: m.items ?? [], steps: [...steps] };
-            if (!isToolMessage(m) && !isApprovalMessage(m) && m.role === "assistant" && m.pending)
+            if (!isToolMessage(m) && m.role === "assistant" && m.pending)
               return {
                 role: "assistant" as const,
                 content: `⚠️ ${message}`,
@@ -1070,12 +940,7 @@ export function LMChatApp() {
             items: m.items ?? [],
             steps: m.steps ?? [],
           };
-        if (
-          !isToolMessage(m) &&
-          !isApprovalMessage(m) &&
-          m.role === "assistant" &&
-          m.pending
-        )
+        if (!isToolMessage(m) && m.role === "assistant" && m.pending)
           return {
             role: "assistant" as const,
             content: m.content,
@@ -1095,8 +960,7 @@ export function LMChatApp() {
     if (!active) return undefined;
     for (let i = active.messages.length - 1; i >= 0; i--) {
       const m = active.messages[i];
-      if (!isToolMessage(m) && !isApprovalMessage(m) && m.role === "user")
-        return m.content;
+      if (!isToolMessage(m) && m.role === "user") return m.content;
     }
     return undefined;
   }
@@ -1111,7 +975,7 @@ export function LMChatApp() {
     const idx = active.messages
       .map((m, i) => ({ m, i }))
       .reverse()
-      .find(({ m }) => !isToolMessage(m) && !isApprovalMessage(m) && m.role === "user")?.i;
+      .find(({ m }) => !isToolMessage(m) && m.role === "user")?.i;
     if (idx === undefined) return;
     patchActive((s) => ({ messages: s.messages.slice(0, idx) }));
     send(prompt);
@@ -1122,8 +986,7 @@ export function LMChatApp() {
   function retryFrom(index: number) {
     if (!active || activeBusy) return;
     const target = active.messages[index];
-    if (isToolMessage(target) || isApprovalMessage(target) || target.role !== "user")
-      return;
+    if (isToolMessage(target) || target.role !== "user") return;
     const prompt = target.content;
     patchActive((s) => ({ messages: s.messages.slice(0, index) }));
     send(prompt);
@@ -1133,77 +996,6 @@ export function LMChatApp() {
   function continueRun() {
     if (activeBusy) return;
     send("Please continue from where you left off.");
-  }
-
-  /** Attempts the (not-yet-implemented) /approve endpoint so the failure path
-      is real, not simulated. The backend currently declares no such route,
-      so this always 404s — the honest notice below reflects that instead of
-      failing silently (mirrors the legacy ui's respondToApproval). */
-  async function notifyApproveEndpoint(sid: string, approved: boolean) {
-    let notice: string | undefined;
-    try {
-      const resp = await fetch(APPROVE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: backendSessionId(sid), approved }),
-      });
-      if (!resp.ok) throw new Error(`Approve endpoint ${resp.status}`);
-    } catch {
-      notice = "Approval not recorded — backend endpoint isn't wired up yet.";
-    }
-    if (notice) {
-      patchSession(sid, (s) => {
-        const idx = s.messages.findIndex(
-          (x) => isApprovalMessage(x) && x.status !== "pending",
-        );
-        if (idx < 0) return {};
-        const m = [...s.messages];
-        m[idx] = { ...(m[idx] as ApprovalMessage), networkNotice: notice };
-        return { messages: m };
-      });
-    }
-  }
-
-  /** Mark a pending approval approved. The backend approval gate isn't wired
-      up yet (see notifyApproveEndpoint) — this only records the decision. */
-  function approveEdit() {
-    const sid = activeId;
-    patchSession(sid, (s) => {
-      const idx = s.messages.findIndex(
-        (x) => isApprovalMessage(x) && x.status === "pending",
-      );
-      if (idx < 0) return {};
-      const m = [...s.messages];
-      m[idx] = { ...(m[idx] as ApprovalMessage), status: "approved" };
-      return {
-        messages: m,
-        insp: { status: "idle" },
-        run: { ...IDLE_SESSION_RUN },
-      };
-    });
-    void notifyApproveEndpoint(sid, true);
-  }
-
-  function rejectEdit() {
-    const sid = activeId;
-    patchActive((s) => {
-      const idx = s.messages.findIndex(
-        (x) => isApprovalMessage(x) && x.status === "pending",
-      );
-      if (idx < 0) return {};
-      const m = [...s.messages];
-      m[idx] = { ...(m[idx] as ApprovalMessage), status: "rejected" };
-      m.push({
-        role: "assistant",
-        content: "Left the file unchanged — nothing was written.",
-      });
-      return {
-        messages: m,
-        insp: { status: "idle" },
-        run: { ...IDLE_SESSION_RUN },
-      };
-    });
-    void notifyApproveEndpoint(sid, false);
   }
 
   const insp: Insp = active ? active.insp : { status: "idle" };
@@ -1411,16 +1203,6 @@ export function LMChatApp() {
                           />
                         );
                       }
-                      if (isApprovalMessage(m)) {
-                        return (
-                          <ApprovalCard
-                            key={i}
-                            msg={m}
-                            onApprove={approveEdit}
-                            onReject={rejectEdit}
-                          />
-                        );
-                      }
                       const next = active.messages[i + 1];
                       // A user turn immediately followed by a failed/empty reply
                       // already carries Retry/Continue — its own retry-from
@@ -1429,7 +1211,6 @@ export function LMChatApp() {
                         m.role === "user" &&
                         next &&
                         !isToolMessage(next) &&
-                        !isApprovalMessage(next) &&
                         next.error;
                       const emptyFinished =
                         m.role === "assistant" &&
@@ -1481,9 +1262,6 @@ export function LMChatApp() {
                           ) : (
                             bubble
                           )}
-                          {m.role === "assistant" && m.perf && (
-                            <PerfStrip perf={m.perf} />
-                          )}
                           {m.role === "user" && !activeBusy && !redundantWithRetry && (
                             <button
                               className="lm-bubble__retryfrom"
@@ -1506,7 +1284,6 @@ export function LMChatApp() {
                 onSend={() => send()}
                 onStop={() => stopSessionRun(activeId)}
                 loading={activeBusy}
-                blocked={pendingApproval}
                 model={model}
                 onChangeModel={switchModel}
                 modelLoading={modelLoading}
@@ -1514,12 +1291,6 @@ export function LMChatApp() {
                 pendingModel={pendingModel}
                 installedModels={installedModels}
                 installedModelDetails={installedModelDetails}
-                permTier={active.permTier}
-                onChangePerm={setPermTier}
-                attached={active.attached}
-                contextFiles={CONTEXT_FILES}
-                onAttach={attachContext}
-                onDetach={detachContext}
                 files={files}
                 onAddFiles={addFiles}
                 onRemoveFile={removeFile}
@@ -1545,7 +1316,6 @@ export function LMChatApp() {
           model={model}
           provider={provider}
           project={active ? active.project : null}
-          attached={active ? active.attached : []}
           run={activeRun}
           focusSpan={focusSpan}
           width={rightWidth}

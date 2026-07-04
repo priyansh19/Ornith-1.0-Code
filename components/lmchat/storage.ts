@@ -5,7 +5,7 @@
    Sessions saved by older versions may carry extra keys at runtime (e.g. a
    removed per-session config) — harmless on spread; nothing reads them. */
 import type { Folder, Provider, Session } from "./data";
-import { IDLE_SESSION_RUN, isToolMessage, isApprovalMessage } from "./data";
+import { IDLE_SESSION_RUN, isToolMessage } from "./data";
 
 const LS_KEY = "mach2:lmchat:v1";
 
@@ -37,12 +37,29 @@ export function loadPersistedState(): Partial<PersistedState> | null {
       // other future source of a collision) — keep the first occurrence only,
       // since a duplicate id renders in two sidebar groups at once (e.g. a
       // folder AND "Recent") and confuses every id-keyed lookup.
-      state.sessions = dedupeById(state.sessions).map(sanitizeReloadedSession);
+      state.sessions = dedupeById(state.sessions)
+        .map(dropLegacyMessages)
+        .map(sanitizeReloadedSession);
     }
     return state;
   } catch {
     return null;
   }
+}
+
+/** Drops message shapes this app no longer produces (e.g. the removed
+    mock-era `type: "approval"` cards) from sessions persisted by older
+    versions — an unknown shape would render as a malformed chat bubble and
+    break message search, which expects only chat + tool messages. */
+function dropLegacyMessages(s: Session): Session {
+  if (!Array.isArray(s.messages)) return { ...s, messages: [] };
+  const messages = s.messages.filter(
+    (m) =>
+      m &&
+      (isToolMessage(m) ||
+        ("role" in m && (m.role === "user" || m.role === "assistant"))),
+  );
+  return messages.length === s.messages.length ? s : { ...s, messages };
 }
 
 /** Keeps the first occurrence of each session id, dropping later duplicates. */
@@ -58,14 +75,13 @@ function dedupeById(sessions: Session[]): Session[] {
 }
 
 /** A reload/re-mount loses every in-flight timer and abort controller, so any
-    session persisted mid-run (status running/waiting/streaming, or a
-    still-"running" tool row / pending assistant bubble) would otherwise come
-    back frozen with a spinner nothing will ever resolve. Snap those back to a
-    stopped, non-busy state. */
+    session persisted mid-run (status running/streaming, or a still-"running"
+    tool row / pending assistant bubble) would otherwise come back frozen with
+    a spinner nothing will ever resolve. Snap those back to a stopped,
+    non-busy state. */
 function sanitizeReloadedSession(s: Session): Session {
   const busy =
     s.run?.status === "running" ||
-    s.run?.status === "waiting" ||
     s.run?.status === "streaming";
   if (!busy) return s;
   return {
@@ -79,7 +95,7 @@ function sanitizeReloadedSession(s: Session): Session {
     messages: s.messages.map((m) => {
       if (isToolMessage(m) && m.running)
         return { type: "tool" as const, running: false, summary: "Interrupted — reloaded", items: m.items ?? [], steps: m.steps ?? [] };
-      if (!isToolMessage(m) && !isApprovalMessage(m) && m.role === "assistant" && m.pending)
+      if (!isToolMessage(m) && m.role === "assistant" && m.pending)
         return { role: "assistant" as const, content: m.content || "— interrupted by reload" };
       return m;
     }),

@@ -1,14 +1,12 @@
 import * as React from "react";
-import { Card, Badge, KeyValueRow, Tag, Spinner, Icon } from "@/components/ds";
-import { ContextMeter } from "./ContextMeter";
-import type { CtxFile, Insp, Provider } from "./data";
+import { Card, Badge, KeyValueRow, Tag, Spinner } from "@/components/ds";
+import type { Insp, Provider } from "./data";
 
 export interface InspectorBodyProps {
   state: Insp;
   model: string;
   provider: Provider;
   project: string | null;
-  attached: CtxFile[];
 }
 
 export function InspectorBody({
@@ -16,7 +14,6 @@ export function InspectorBody({
   model,
   provider,
   project,
-  attached,
 }: InspectorBodyProps) {
   return (
     <div className="lm-insp">
@@ -58,21 +55,6 @@ export function InspectorBody({
             )}
           </div>
         )}
-        {state.status === "waiting" && (
-          <div
-            style={{
-              marginTop: 10,
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              color: "var(--amber)",
-              fontSize: 13,
-            }}
-          >
-            <Icon name="file-pen" size={13} />
-            Waiting for your approval…
-          </div>
-        )}
         {state.status === "done" && state.session && (
           <>
             <div style={{ height: 8 }} />
@@ -83,10 +65,6 @@ export function InspectorBody({
             />
           </>
         )}
-      </Card>
-
-      <Card title="Context" style={{ marginTop: 14 }}>
-        <ContextMeter model={model} attached={attached} live />
       </Card>
     </div>
   );
