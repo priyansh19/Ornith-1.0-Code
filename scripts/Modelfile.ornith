@@ -1,0 +1,26 @@
+# Ready-made Ollama Modelfile that creates the `ornith:9b` tag the LMChat UI
+# expects by default (see components/lmchat/LMChatApp.tsx: model defaults to
+# "ornith:9b", and data.ts describes it as Q4_K_M / ctx 32768 / tools:true).
+#
+# Build it once:
+#   ollama create ornith:9b -f scripts/Modelfile.ornith
+#
+# It pulls the official GGUF weights and bakes in the two settings that the
+# hard-won lessons in previous_plan.md say matter most on CPU-only hardware:
+#
+#   * num_ctx 32768 — Ollama's small default context window silently truncates
+#     the prompt front on long runs, which collapses the model's native
+#     tool-call format (you see stray `<channel|>` markers or narrated
+#     "Action: …" text in chat). A 32k window is what the backend uses too.
+#   * temperature 0.6 / top_p 0.95 — Ornith 1.0's recommended sampling.
+#
+# NOTE: the weights come from Hugging Face. If `ollama pull ornith:9b` already
+# works against the Ollama library for you, you don't need this file — use the
+# pull. This exists so the UI's default tag resolves no matter how you sourced
+# the weights.
+
+FROM hf.co/deepreinforce-ai/Ornith-1.0-9B-GGUF
+
+PARAMETER num_ctx 32768
+PARAMETER temperature 0.6
+PARAMETER top_p 0.95
