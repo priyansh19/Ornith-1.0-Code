@@ -109,7 +109,7 @@ export function SettingsModal({
         {tab === "provider" ? (
           <>
             <div className="lm-modal__sub">
-              LMChat runs open-source models through Ollama. The default provider stays
+              OrnithChat runs open-source models through Ollama. The default provider stays
               loaded; point it at any reachable Ollama URL.
             </div>
             <div className="lm-modal__body">

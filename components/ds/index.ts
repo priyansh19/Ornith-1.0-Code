@@ -1,4 +1,4 @@
-/* LMChat design system — public component surface.
+/* OrnithChat design system — public component surface.
    Mirrors the compiled `_ds_bundle.js` namespace from the prototype. */
 export { Icon } from "./Icon";
 export type { IconName, IconProps } from "./Icon";

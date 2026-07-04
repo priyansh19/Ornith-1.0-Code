@@ -10,7 +10,7 @@ export interface GlobalSearchResultsProps {
 /** All-chats search results — one row per session with a hit, showing the
     session title, a text snippet around the first match, and a "+N more
     matches" pill when a session has multiple hits. Clicking a row jumps to
-    that session filtered to its matching message(s) (see LMChatApp). */
+    that session filtered to its matching message(s) (see OrnithChatApp). */
 export function GlobalSearchResults({ hits, query, onJump }: GlobalSearchResultsProps) {
   return (
     <div className="lm-globalsearch">

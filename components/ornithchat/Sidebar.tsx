@@ -126,7 +126,7 @@ export interface SidebarProps {
   onDeleteFolder: (id: string) => void;
   onCreateFolder: () => string;
   mobileOpen?: boolean;
-  /** User-adjustable width in px (drag handle in LMChatApp) — falls back to
+  /** User-adjustable width in px (drag handle in OrnithChatApp) — falls back to
       the CSS default (280px) when omitted. */
   width?: number;
 }

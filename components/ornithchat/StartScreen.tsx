@@ -32,7 +32,7 @@ export function StartScreen({
   return (
     <div className="lm-pick">
       <div className="lm-pick__head">
-        <div className="lm-empty__mark">M2</div>
+        <div className="lm-empty__mark">OC</div>
         <h2 className="lm-pick__h">Start a coding session</h2>
         <p className="lm-pick__p">
           Pick a working folder — every tool the agent runs (reads, edits,

@@ -19,20 +19,6 @@ import type { Span } from "./data";
 
 export const BACKEND_URL = "http://localhost:8000";
 
-// Must stay comfortably ABOVE the backend's own per-round ceiling
-// (OLLAMA_TIMEOUT = 600s in agent.py) or this fires on every genuinely slow
-// round before the backend ever gets a chance to finish or fail on its own —
-// confirmed happening in practice on this CPU-only hardware (no GPU): a
-// single round measured at 170-345s total, and this used to be set to 5
-// minutes (300s), which is BELOW that backend ceiling. This is a "the stream
-// went silent forever" backstop, not a per-round budget. A single round
-// retrying a failing tool call in a loop, or an unhandled exception killing
-// the backend's worker thread mid-loop, both look identical from here: the
-// HTTP connection stays open but no more `data:` lines ever arrive, so
-// `reader.read()` would otherwise hang forever with no way to tell the
-// difference from "still legitimately thinking".
-const INACTIVITY_TIMEOUT_MS = 11 * 60_000;
-
 /** One flat node from the backend's span stream — parented by id, not nested.
     The UI assembles these into the nested `Span` tree shape TraceTree
     renders (see data.ts). A node may arrive more than once
@@ -94,21 +80,14 @@ export async function runLiveChat(
   let receivedDone = false;
 
   try {
+    // Deliberately no inactivity timeout here: a single slow round on
+    // CPU-only hardware emits zero SSE bytes until the model call returns,
+    // and there is no upper bound on how long the model is allowed to run.
+    // The Stop button (abort signal) is the only way to cut a turn short;
+    // a dead backend process still closes the connection, which surfaces
+    // below as `done` without a `done` event ("Connection lost").
     while (true) {
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      const { done, value } = await Promise.race([
-        reader.read(),
-        new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => {
-            const mins = Math.round(INACTIVITY_TIMEOUT_MS / 60_000);
-            reject(
-              new Error(
-                `No response from the agent in ${mins} minutes — it may be stuck retrying a failing tool call, or the server crashed mid-turn. Check the server terminal.`,
-              ),
-            );
-          }, INACTIVITY_TIMEOUT_MS);
-        }),
-      ]).finally(() => clearTimeout(timeoutId));
+      const { done, value } = await reader.read();
 
       // A chunk already read before abort() still resolves here — stop applying
       // events the instant the caller cancelled, even mid-buffer, so a stray
@@ -131,7 +110,7 @@ export async function runLiveChat(
       }
     }
   } finally {
-    // On timeout (or any other throw) the reader is left mid-read; cancelling
+    // On any throw (e.g. abort) the reader is left mid-read; cancelling
     // releases the underlying connection instead of leaking it.
     reader.cancel().catch(() => {});
   }

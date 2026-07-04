@@ -9,7 +9,7 @@ import { test, expect } from "@playwright/test";
    fresh one — which would orphan the backend's real conversational
    context even though the UI still shows continuous chat history. */
 
-const LS_KEY = "mach2:lmchat:v1";
+const LS_KEY = "ornithchat:v1";
 const PERSISTED_BACKEND_SESSION_ID = "11111111-2222-3333-4444-555555555555";
 
 function seededState() {
@@ -22,7 +22,7 @@ function seededState() {
         folderId: null,
         when: "2m",
         lastActiveAt: Date.now(),
-        project: "~/projects/mach2-harness",
+        project: "~/projects/ornith-harness",
         messages: [
           { role: "user", content: "Hello from before the reload" },
           { role: "assistant", content: "Hi — picking up your earlier context." },

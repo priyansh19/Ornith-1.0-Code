@@ -174,7 +174,7 @@ export async function switchResidentModel(
 /** Unloads `model`, waits out the cooldown window, then reloads it — call
     this once `loadedSince` shows the model has been continuously resident
     past RECYCLE_AFTER_MS. Meant to be driven by a periodic check (see
-    LMChatApp.tsx), not called on every render. */
+    OrnithChatApp.tsx), not called on every render. */
 export async function recycleModel(model: string): Promise<void> {
   await unloadModel(model).catch(() => {});
   await new Promise((resolve) => setTimeout(resolve, RECYCLE_COOLDOWN_MS));

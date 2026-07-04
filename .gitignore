@@ -43,3 +43,6 @@ workspace/
 .env
 __pycache__/
 *.pyc
+
+# local Claude Code permission overrides (machine-specific)
+.claude/settings.local.json

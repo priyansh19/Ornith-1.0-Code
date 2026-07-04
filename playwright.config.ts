@@ -4,7 +4,7 @@ const PORT = 3100;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 /**
- * E2E config for LMChat. Runs against a production build (`next build` +
+ * E2E config for OrnithChat. Runs against a production build (`next build` +
  * `next start`) for deterministic behavior. Chromium is pre-installed in this
  * environment (PLAYWRIGHT_BROWSERS_PATH), so no `playwright install` is needed.
  */

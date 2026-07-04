@@ -1,4 +1,4 @@
-// LMChat desktop shell (Electron).
+// OrnithChat desktop shell (Electron).
 // In dev it loads the Next dev server; when packaged it serves the static
 // export (out/) from a tiny in-process HTTP server and loads that.
 const { app, BrowserWindow, shell, ipcMain, dialog } = require("electron");
@@ -69,7 +69,7 @@ async function createWindow() {
     minWidth: 980,
     minHeight: 640,
     backgroundColor: "#0d0d0f",
-    title: "LMChat",
+    title: "OrnithChat",
     autoHideMenuBar: true,
     // Windows' default title bar renders as a stark white strip that clashes
     // with the app's dark theme. `titleBarStyle: "hidden"` removes it while
@@ -99,7 +99,7 @@ async function createWindow() {
       cancelId: 1,
       noLink: true,
       title: "Open external link?",
-      message: "This link leaves LMChat.",
+      message: "This link leaves OrnithChat.",
       detail: url,
     });
     if (response === 0) shell.openExternal(url);

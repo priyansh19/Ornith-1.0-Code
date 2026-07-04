@@ -53,7 +53,7 @@ export interface RightPanelProps {
   project: string | null;
   run: SessionRun; // the ACTIVE session's live run
   focusSpan?: string;
-  /** User-adjustable width in px (drag handle in LMChatApp) — falls back to
+  /** User-adjustable width in px (drag handle in OrnithChatApp) — falls back to
       the CSS default (350px) when omitted. */
   width?: number;
 }

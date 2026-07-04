@@ -1,5 +1,5 @@
-import { LMChatApp } from "@/components/lmchat/LMChatApp";
+import { OrnithChatApp } from "@/components/ornithchat/OrnithChatApp";
 
 export default function Page() {
-  return <LMChatApp />;
+  return <OrnithChatApp />;
 }

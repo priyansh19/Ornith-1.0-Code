@@ -1,5 +1,5 @@
 /* ============================================================
-   LMChat — UI kit layout
+   OrnithChat — UI kit layout
    Ported from the prototype index.html <style> block. Shell, top
    bar, sidebar, chat, composer, right panel, pre-flight, modals.
    ============================================================ */
@@ -980,7 +980,7 @@ html, body { height: 100%; overflow: hidden; }
 .lm-step__thought { margin: 0; color: var(--text); font-family: var(--font-sans); white-space: pre-wrap; word-break: break-word; }
 .lm-step__action { margin: 4px 0 0; color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 
-.lm-step__summary--tool { color: var(--text); cursor: default; flex-wrap: wrap; }
+.lm-step__summary--tool { color: var(--text); flex-wrap: wrap; }
 .lm-step__summary--tool strong { color: var(--text); font-family: var(--font-mono); }
 .lm-step__input {
   color: var(--muted); font-family: var(--font-mono); font-style: italic;
@@ -992,13 +992,16 @@ html, body { height: 100%; overflow: hidden; }
   padding: 1px 6px; border-radius: var(--radius-pill); border: 1px solid var(--amber); color: var(--amber);
 }
 
-.lm-step__result { margin: 3px 0 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
-.lm-step__result--git { font-family: var(--font-mono); }
-
-.lm-step__toggle {
-  background: none; border: none; color: var(--cyan); font-size: 10.5px;
-  cursor: pointer; font-family: var(--font-mono); padding: 3px 0 0;
+/* Finished tool output: minimized by default behind the header row —
+   expanding reveals this subtle scrollable box. */
+.lm-step__output {
+  margin-top: 4px; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface);
+  max-height: 260px; overflow: auto;
 }
+.lm-step__result { margin: 0; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+.lm-step__result--git { font-family: var(--font-mono); }
 
 /* ── Diff viewer: square change-markers, subtle row tints, blank context
    lines preserved (never filtered) ── */

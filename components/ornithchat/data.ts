@@ -1,5 +1,5 @@
-/* LMChat UI kit — seed data + types.
-   LMChat is a plain local chat app: pick a working folder, then chat with the
+/* OrnithChat UI kit — seed data + types.
+   OrnithChat is a plain local chat app: pick a working folder, then chat with the
    local Ornith model. Every turn streams live from the backend agent loop on
    :8000 (see liveBackend.ts); the model itself runs in Ollama. */
 import type { ToolItem } from "@/components/ds";

@@ -1,7 +1,7 @@
 /* ============================================================
-   LMChat — Color tokens
+   OrnithChat — Color tokens
    Dark developer-tool palette. Near-black canvas, warm orange
-   brand accent (from the M2 logo), violet agent accent,
+   brand accent (from the OC logo), violet agent accent,
    terminal semantic colors.
    ============================================================ */
 
@@ -21,7 +21,7 @@
   --muted:       #8a8a96;  /* labels, captions, metadata */
   --faint:       #5a5a66;  /* disabled, placeholder, ghost */
 
-  /* ---- Brand (warm orange — the M2 mark) ---- */
+  /* ---- Brand (warm orange — the OC mark) ---- */
   --brand:         #e06c3a;  /* primary brand + CTA */
   --brand-hover:   #ee7c49;  /* hover (lighter) */
   --brand-active:  #c25a2c;  /* press (darker) */

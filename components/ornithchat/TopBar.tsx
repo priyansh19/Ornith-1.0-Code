@@ -45,8 +45,8 @@ export function TopBar({
         <Icon name="menu" size={18} />
       </IconButton>
       <div className="lm-topbar__brand">
-        <span className="lm-mark">M2</span>
-        <span className="lm-wordmark">LMChat</span>
+        <span className="lm-mark">OC</span>
+        <span className="lm-wordmark">OrnithChat</span>
       </div>
 
       <div className="lm-topbar__right">

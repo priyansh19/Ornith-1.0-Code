@@ -1,5 +1,5 @@
-/* Generates the LMChat app icon (512×512 PNG): a rounded-rect in brand
-   orange with the "M2" mark, written to build/icon.png (electron-builder
+/* Generates the OrnithChat app icon (512×512 PNG): a rounded-rect in brand
+   orange with the "OC" mark, written to build/icon.png (electron-builder
    picks it up automatically) and app/icon.png (Next.js favicon).
 
    Run with the globally installed playwright:
@@ -30,7 +30,7 @@ const html = `<!doctype html>
     transform: translateY(-10px);
   }
 </style>
-<div id="icon"><span>M2</span></div>`;
+<div id="icon"><span>OC</span></div>`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({

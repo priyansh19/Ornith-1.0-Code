@@ -44,7 +44,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
         </div>
 
         <div className="lm-modal__body">
-          <div className="lm-mdl__section">How LMChat works</div>
+          <div className="lm-mdl__section">How OrnithChat works</div>
           <ol className="lm-help__steps">
             <li>
               <b>Pick a working folder</b> when you start a session — every
@@ -87,7 +87,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
             className="lm-dim"
             style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}
           >
-            LMChat · local models over Ollama
+            OrnithChat · local models over Ollama
           </span>
           <Button variant="secondary" size="sm" onClick={onClose}>
             Done

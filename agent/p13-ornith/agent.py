@@ -29,20 +29,24 @@ def _new_span_id():
 
 MODEL = "ornith:9b"
 HARNESS_NAME = "ornith"
-OLLAMA_TIMEOUT = 600  # same rationale as every other harness (CPU-only box)
+# No per-round HTTP ceiling: a slow CPU-only round can legitimately take
+# longer than any fixed budget, and the model is allowed to run as long as
+# it needs. None disables httpx timeouts entirely; the UI's Stop button
+# aborts the SSE request when a human decides it's been long enough.
+OLLAMA_TIMEOUT = None
 MAX_SCOUT_DEPTH = 2
 
 # Deliberately SHORT. Ornith ships a built-in agentic system prompt in its
 # Modelfile; a long override fights its training (the old 300-line JSON-ReAct
 # prompt demanded "raw JSON only", directly contradicting the model's native
-# thinking-block + XML-tool-call format). This adds only the Mach2-specific
+# thinking-block + XML-tool-call format). This adds only the OrnithChat-specific
 # context the built-in prompt can't know.
 SYSTEM_PROMPT = (
     "You are Ornith, an open-source agentic coding assistant. Think step by "
     "step in a reasoning block, then act. Use the provided tools when they "
     "help. Be concise, correct, and direct: write working code and explain "
     "only what is non-obvious.\n\n"
-    "Context: you are running inside the Mach2 harness. File tools operate "
+    "Context: you are running inside the OrnithChat harness. File tools operate "
     "on a shared workspace directory; run_shell runs inside that same "
     "directory (recursive-delete commands are refused) — use it for any "
     "computation, scripting, or terminal work. You also have persistent "
@@ -100,8 +104,15 @@ def _extract_thinking(msg: AIMessage) -> str:
     return ak.get("reasoning_content") or ak.get("thinking") or ""
 
 
-def run_agent(messages, on_event=None, max_rounds=60, depth=0, allowed_tools=None,
+def run_agent(messages, on_event=None, max_rounds=None, depth=0, allowed_tools=None,
               span_id=None, parent_span_id=None, model=None):
+    # max_rounds=None (the top-level default) means UNBOUNDED: the loop
+    # keeps running as long as the model still has work left (keeps
+    # emitting tool calls) and exits only when it returns a final answer
+    # with no tool calls, errors out, or the user stops the turn. The
+    # model is local and free — there is deliberately no round or time
+    # cap. Scouts still pass an explicit bound: a delegated sub-task is
+    # supposed to come back with a report, not run forever.
     def emit(evt):
         if on_event:
             on_event(evt)
@@ -147,8 +158,12 @@ def run_agent(messages, on_event=None, max_rounds=60, depth=0, allowed_tools=Non
     ) as trace:
         answer = "Agent hit max rounds without finishing — partial progress is in the trace."
         nudges = 0
+        round_no = 0
         try:
-            for round_no in range(1, max_rounds + 1):
+            # Never-ending while the agent has work left; only a bounded
+            # scout (max_rounds set) can run out of rounds.
+            while max_rounds is None or round_no < max_rounds:
+                round_no += 1
                 t0 = time.time()
                 try:
                     ai = llm_tools.invoke(lc_messages)

@@ -13,7 +13,7 @@ test.describe("Initial render", () => {
   test("shows chrome, sidebar nav, ready chat, and inspector", async ({
     page,
   }) => {
-    await expect(page.locator(".lm-wordmark")).toHaveText("LMChat");
+    await expect(page.locator(".lm-wordmark")).toHaveText("OrnithChat");
 
     // default session (s1) is bound to the Research + Critic harness
     await expect(harnessSelect(page)).toHaveValue("research");
@@ -36,7 +36,7 @@ test.describe("Initial render", () => {
       page.getByRole("tab", { name: "Inspector" }),
     ).toHaveAttribute("aria-selected", "true");
     await expect(page.locator(".lm-insp")).toContainText(
-      "~/projects/mach2-harness",
+      "~/projects/ornith-harness",
     );
     await expect(page.locator(".lm-insp")).toContainText(
       "http://localhost:11434",
@@ -216,7 +216,7 @@ test.describe("New-session pre-flight", () => {
       page.getByRole("heading", { name: "Start a coding session" }),
     ).toBeVisible();
     await expect(page.locator(".lm-pick__dir input")).toHaveValue(
-      "~/projects/mach2-harness",
+      "~/projects/ornith-harness",
     );
 
     // 3 loaded harness cards (+ the "browse all" card)
@@ -459,7 +459,7 @@ test.describe("Workspace lock", () => {
   test("the lock button shows the locked working folder", async ({ page }) => {
     await expect(page.locator(".lm-wsbtn--held")).toBeVisible();
     await page.getByRole("button", { name: "Workspace folder" }).click();
-    await expect(page.locator(".lm-ws__path")).toContainText("mach2-harness");
+    await expect(page.locator(".lm-ws__path")).toContainText("ornith-harness");
     await expect(page.locator(".lm-ws__status")).toContainText("locked");
   });
 

@@ -1,4 +1,4 @@
-/* localStorage persistence for LMChatApp — sessions, folders, active session,
+/* localStorage persistence for OrnithChatApp — sessions, folders, active session,
    and a few global settings. Loaded once on init;
    written back (debounced) whenever the persisted slice of state changes.
    Never throws: corrupt/missing data always falls back to a safe default.
@@ -7,7 +7,7 @@
 import type { Folder, Provider, Session } from "./data";
 import { IDLE_SESSION_RUN, isToolMessage } from "./data";
 
-const LS_KEY = "mach2:lmchat:v1";
+const LS_KEY = "ornithchat:v1";
 
 export interface PersistedState {
   sessions: Session[];
@@ -90,7 +90,7 @@ function sanitizeReloadedSession(s: Session): Session {
     // Keep the backend session id (if one was ever minted) even though the
     // run itself is snapped back to idle — losing it here would silently
     // orphan the next turn into a brand-new, context-less backend session
-    // (see backendSessionIdsRef rehydration in LMChatApp.tsx).
+    // (see backendSessionIdsRef rehydration in OrnithChatApp.tsx).
     insp: s.insp.session ? { status: "idle", session: s.insp.session } : { status: "idle" },
     messages: s.messages.map((m) => {
       if (isToolMessage(m) && m.running)

@@ -50,10 +50,11 @@ function ThoughtBullet({
   );
 }
 
+/** A finished tool call: the header row (tool name + input) stays visible,
+    the output itself is minimized behind it — click the row to expand the
+    subtle output box (or the diff, for file-writing tools). */
 function ToolBullet({ step }: { step: Extract<Step, { type: "tool_result" }> }) {
-  const [expanded, setExpanded] = React.useState(false);
-  const long = step.result.length > 220;
-  const shown = expanded || !long ? step.result : step.result.slice(0, 220) + "…";
+  const [open, setOpen] = React.useState(false);
   const destructive = DESTRUCTIVE_TOOLS.has(step.tool);
   const isGit = GIT_TOOLS.has(step.tool);
   const dotClass = destructive
@@ -65,7 +66,12 @@ function ToolBullet({ step }: { step: Extract<Step, { type: "tool_result" }> }) 
     <div className="lm-step">
       <span className={`lm-step__dot ${dotClass}`} />
       <div className="lm-step__body">
-        <div className="lm-step__summary lm-step__summary--tool">
+        <button
+          type="button"
+          className="lm-step__summary lm-step__summary--tool"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
           <strong>{step.tool}</strong>
           <span className="lm-step__input">{step.input}</span>
           {destructive && (
@@ -73,24 +79,20 @@ function ToolBullet({ step }: { step: Extract<Step, { type: "tool_result" }> }) 
               writes/executes
             </span>
           )}
-        </div>
-        {step.diff ? (
-          <DiffView diff={step.diff} />
-        ) : (
-          <p className={`lm-step__result ${isGit ? "lm-step__result--git" : ""}`}>
-            {shown}
-          </p>
-        )}
-        {!step.diff && long && (
-          <button
-            type="button"
-            className="lm-step__toggle"
-            onClick={() => setExpanded((e) => !e)}
-            aria-expanded={expanded}
-          >
-            {expanded ? "Show less" : "Show more"}
-          </button>
-        )}
+          <span className={`lm-step__chev ${open ? "lm-step__chev--open" : ""}`}>
+            <Icon name="chevron-right" size={12} />
+          </span>
+        </button>
+        {open &&
+          (step.diff ? (
+            <DiffView diff={step.diff} />
+          ) : (
+            <div className="lm-step__output">
+              <p className={`lm-step__result ${isGit ? "lm-step__result--git" : ""}`}>
+                {step.result}
+              </p>
+            </div>
+          ))}
       </div>
     </div>
   );
@@ -103,8 +105,9 @@ export interface StepTraceProps {
   running: boolean;
 }
 
-/** Flowing feed of reasoning bullets for one agent turn — thoughts and tool
-    calls, visible by default (not one collapsed box). */
+/** Flowing feed of reasoning bullets for one agent turn — one row per
+    thought / tool call. Rows are always visible; each row's detail
+    (thought text, tool output) is collapsed until clicked. */
 export function StepTrace({ steps, running }: StepTraceProps) {
   if (steps.length === 0) return null;
   return (

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LMChat",
+  title: "OrnithChat",
   description:
     "Local agentic coding chat — chat with the local Ornith model over Ollama.",
 };

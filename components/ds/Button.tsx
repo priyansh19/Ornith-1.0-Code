@@ -19,7 +19,7 @@ export interface ButtonProps
 }
 
 /**
- * LMChat primary button. Warm-orange brand fill by default; `agent` variant
+ * OrnithChat primary button. Warm-orange brand fill by default; `agent` variant
  * uses the violet agent accent.
  */
 export function Button({

@@ -69,7 +69,7 @@ function notifyIfHidden(title: string, body: string) {
 type Patch = Partial<Session> | ((s: Session) => Partial<Session>);
 
 /**
- * LMChat app shell — agentic coding chat.
+ * OrnithChat app shell — agentic coding chat.
  * Choose a working directory before the first prompt, watch inline
  * tool activity, and read the trace in the right sidebar.
  * Folders · sessions · Ollama provider.
@@ -153,7 +153,7 @@ function ResizeHandle({ side, width, setWidth, min, max }: ResizeHandleProps) {
   );
 }
 
-export function LMChatApp() {
+export function OrnithChatApp() {
   // Loaded once per mount — corrupt/missing localStorage falls back to null,
   // and every field below independently falls back to its seed/default value.
   const persisted = React.useRef(loadPersistedState()).current;
@@ -262,7 +262,7 @@ export function LMChatApp() {
   const removeFile = React.useCallback((id: string) => {
     setFiles((p) => p.filter((f) => f.id !== id));
   }, []);
-  const [dir, setDir] = React.useState("~/projects/mach2");
+  const [dir, setDir] = React.useState("~/projects/ornith");
   // Defaults open (matches SSR) but collapses on first mount if the window
   // is already narrow, so the chat gets full width on small screens instead
   // of the run-details panel eating the layout before anyone touches it.
@@ -596,7 +596,7 @@ export function LMChatApp() {
     setActiveId(id);
     setInput("");
     setFiles([]);
-    setDir("~/projects/mach2");
+    setDir("~/projects/ornith");
   }
 
   function createFolder(): string {
@@ -731,7 +731,7 @@ export function LMChatApp() {
   function exportRun() {
     if (!active) return;
     const data = {
-      exportedFrom: "LMChat",
+      exportedFrom: "OrnithChat",
       session: {
         id: active.id,
         title: active.title,
@@ -1154,7 +1154,7 @@ export function LMChatApp() {
               <div className="lm-chat" ref={scrollRef} onScroll={handleChatScroll}>
                 {active.messages.length === 0 ? (
                   <div className="lm-empty">
-                    <span className="lm-empty__mark">M2</span>
+                    <span className="lm-empty__mark">OC</span>
                     <div className="lm-empty__h">{AGENT_LABEL} is ready.</div>
                     <div className="lm-empty__p">
                       Working in{" "}

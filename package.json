@@ -1,8 +1,8 @@
 {
-  "name": "lmchat",
+  "name": "ornithchat",
   "version": "0.1.0",
   "private": true,
-  "description": "LMChat — local agentic coding chat over Ollama models via importable agent harnesses",
+  "description": "OrnithChat — local agentic coding chat over Ollama models via importable agent harnesses",
   "author": "priyansh19",
   "main": "electron/main.js",
   "scripts": {
@@ -39,8 +39,8 @@
     "typescript": "^6.0.3"
   },
   "build": {
-    "appId": "com.priyansh.lmchat",
-    "productName": "LMChat",
+    "appId": "com.priyansh.ornithchat",
+    "productName": "OrnithChat",
     "files": [
       "electron/**/*",
       "out/**/*",
