@@ -7,14 +7,12 @@ AGENT_ROOT = Path(__file__).parent.parent / "agent"
 def _load_harness(dir_name: str):
     """Import a harness directory's agent.py as an isolated module.
 
-    Every harness dir defines files literally named agent.py/tools.py/
-    mcp_client.py, so importing two of them via a shared sys.path would have
-    the second harness's `import tools` silently resolve to the first
-    harness's already-cached `tools` module. Popping the bare names from
-    sys.modules before each import (and putting only this harness's dir at
-    the front of sys.path for the duration of the import) forces a clean,
-    isolated re-import every time, so `agent.py`'s own `from tools import
-    TOOLS` / `from mcp_client import ...` resolve to ITS sibling files.
+    The harness dir defines files literally named agent.py/tools.py/
+    mcp_client.py; putting only this dir at the front of sys.path (and popping
+    the bare names first) makes `agent.py`'s own `from tools import ...` /
+    `from mcp_client import ...` resolve to ITS sibling files. The isolation
+    dance is kept so the loader stays drop-in compatible if more harnesses are
+    ever re-added.
     """
     base = str(AGENT_ROOT / dir_name)
     for bare in ("tools", "mcp_client", "agent"):
@@ -27,22 +25,11 @@ def _load_harness(dir_name: str):
     finally:
         sys.path.remove(base)
 
-# Full registry: every harness built across the project is registered and
-# reachable via the API (`/harnesses`, `harness` field on /chat-stream).
-# The desktop UI always drives "ornith" (the self-scaffolding-native loop,
-# the default); the others remain available to any API client.
+# This standalone build ships ONLY the ornith-native loop (p13) — the thin
+# self-scaffolding executor the desktop UI drives. The dict shape is kept so a
+# future harness is a one-line add and the API contract (`/harnesses`, the
+# `harness` field on /chat-stream) stays stable.
 HARNESSES = {
-    "agent-base": _load_harness("p1-agent-base"),
-    "harness": _load_harness("p2-harness"),
-    "research": _load_harness("p6-specialization"),
-    "a2a": _load_harness("p4-agent-to-agent"),
-    "memory": _load_harness("p5-memory"),
-    "langgraph": _load_harness("p7-langgraph"),
-    "plan-execute": _load_harness("p8-plan-execute"),
-    "supervisor": _load_harness("p9-supervisor"),
-    "rag": _load_harness("p10-rag"),
-    "structured": _load_harness("p11-structured"),
-    "apex": _load_harness("p12-apex"),
     "ornith": _load_harness("p13-ornith"),
 }
 DEFAULT_HARNESS_ID = "ornith"

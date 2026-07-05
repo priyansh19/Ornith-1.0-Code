@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 
 /* Covers the checklist item: "backend session id generated client-side
    upfront ... never left empty at any point, including after a reload".
-   Seeds localStorage with a persisted conversation for the live `a2a`
-   harness that already carries a backend session id (as if a prior turn
-   had run), reloads the app, mocks the backend, and asserts the very next
+   Seeds localStorage with a persisted conversation that already carries a
+   backend session id (as if a prior turn had run), reloads the app, mocks the
+   backend, and asserts the very next
    turn reuses that SAME backend session id instead of silently minting a
    fresh one — which would orphan the backend's real conversational
    context even though the UI still shows continuous chat history. */
@@ -17,8 +17,8 @@ function seededState() {
     sessions: [
       {
         id: "s1",
-        title: "Ongoing a2a chat",
-        harnessId: "a2a",
+        title: "Ongoing chat",
+        harnessId: "ornith",
         folderId: null,
         when: "2m",
         lastActiveAt: Date.now(),
@@ -38,11 +38,7 @@ function seededState() {
     folders: [],
     activeId: "s1",
     harnessLoaded: {
-      "agent-base": true,
-      harness: true,
-      research: false,
-      a2a: true,
-      memory: false,
+      ornith: true,
     },
     model: "ornith:9b",
     provider: {

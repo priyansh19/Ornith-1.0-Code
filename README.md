@@ -122,30 +122,6 @@ Stop (arm `ORNITH_NUM_PREDICT` for a single-generation backstop).
 | Memory | `remember`, `recall`, `list_memories`, `forget` — persists to `workspace/.memory/facts.json`, shared across sessions and harnesses |
 | Delegation | `spawn_scout` — bounded recursive sub-agent for self-contained sub-tasks |
 
-## Registered harnesses (all reachable via the API)
-
-The server registers every harness built across the project. The desktop UI
-always drives `ornith` (the default); the rest are available to any API
-client via the `harness` field on `/chat` and `/chat-stream`, e.g. for
-benchmarking orchestration styles against the same model and tools:
-
-| id | Module | Architecture |
-| --- | --- | --- |
-| `ornith` | p13 | **Default.** Thin self-scaffolding-native loop (above) |
-| `apex` | p12 | LangGraph plan → execute → critic → replan + scout delegation + structured output |
-| `structured` | p11 | ReAct + Pydantic-validated structured final answer |
-| `rag` | p10 | Embedding RAG over workspace files |
-| `supervisor` | p9 | Supervisor routing between researcher/coder sub-agents |
-| `plan-execute` | p8 | LangGraph plan → execute → replan |
-| `langgraph` | p7 | LangGraph ReAct with native tool-calling |
-| `research` | p6 | Draft → critic → revise loop |
-| `memory` | p5 | ReAct + persistent memory store |
-| `a2a` | p4 | Agents calling agents as tools (scout dispatch) |
-| `harness` | p2 | Orchestrator with bounded `delegate` |
-| `agent-base` | p1 | Single hand-rolled ReAct loop |
-
-(p3 is a tools library, not a runnable harness.)
-
 ## API
 
 - `POST /chat-stream` `{message, session_id, harness, model}` → SSE:
