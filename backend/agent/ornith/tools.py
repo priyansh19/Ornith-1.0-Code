@@ -377,7 +377,8 @@ def search_stackoverflow(query: str) -> str:
         return f"Error: {e}"
 
 
-# ── GitHub API (token from repo-root .env, same as p4) ──
+# ── GitHub API (GITHUB_TOKEN from backend/.env — three levels up from
+#    backend/agent/ornith/tools.py) ──
 def _load_env():
     env = _Path(__file__).parent.parent.parent / ".env"
     if env.exists():

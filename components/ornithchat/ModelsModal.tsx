@@ -177,7 +177,7 @@ export function ModelsModal({
 
         <div className="lm-modal__foot">
           <span className="lm-dim" style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
-            {library.length} model{library.length === 1 ? "" : "s"} installed · pulling new models isn't wired up yet — use `ollama pull` in a terminal
+            {library.length} model{library.length === 1 ? "" : "s"} installed · pulling new models isn&apos;t wired up yet — use `ollama pull` in a terminal
           </span>
           <Button variant="secondary" size="sm" onClick={onClose}>
             Done

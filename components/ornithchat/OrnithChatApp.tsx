@@ -529,7 +529,6 @@ export function OrnithChatApp() {
       // query still active is what filters the chat to the matching message(s)
       // instead of dropping the user into an unfiltered conversation.
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

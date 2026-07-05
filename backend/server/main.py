@@ -25,12 +25,12 @@ def _load_harness(dir_name: str):
     finally:
         sys.path.remove(base)
 
-# This standalone build ships ONLY the ornith-native loop (p13) — the thin
-# self-scaffolding executor the desktop UI drives. The dict shape is kept so a
-# future harness is a one-line add and the API contract (`/harnesses`, the
-# `harness` field on /chat-stream) stays stable.
+# This standalone build ships ONLY the ornith-native loop — the thin
+# self-scaffolding executor the desktop UI drives (backend/agent/ornith). The
+# dict shape is kept so a future harness is a one-line add and the API contract
+# (`/harnesses`, the `harness` field on /chat-stream) stays stable.
 HARNESSES = {
-    "ornith": _load_harness("p13-ornith"),
+    "ornith": _load_harness("ornith"),
 }
 DEFAULT_HARNESS_ID = "ornith"
 

@@ -1,9 +1,12 @@
 requests
+beautifulsoup4
 langfuse>=2,<3
 fastapi
 uvicorn
+pydantic
 langchain-core
 langchain-ollama
+ollama
 duckduckgo-search
 wikipedia
 mcp

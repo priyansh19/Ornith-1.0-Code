@@ -15,21 +15,43 @@ history and the lessons behind it).
   `ollama pull nomic-embed-text` (powers semantic workspace search).
 - **Python 3.12+**, **Node 20+**.
 - Optional: local Langfuse at `:3000` for traces (agent runs fine without),
-  `GITHUB_TOKEN` in a root `.env` for the GitHub tools.
+  `GITHUB_TOKEN` in `backend/.env` for the GitHub tools.
 
 ## Run it
 
 ```bash
 # 1. Backend (FastAPI agent server, :8000)
+cd backend
 pip install -r requirements.txt
-cd server && python -m uvicorn main:app --host 0.0.0.0 --port 8000
+python -m uvicorn server.main:app --host 0.0.0.0 --port 8000
 
-# 2. Desktop app (Next on :3010 + Electron window)
+# 2. Desktop app (Next on :3010 + Electron window), from the repo root
 npm install
 npm run dev:desktop
 ```
 
 Browser-only alternative: `npm run dev` → http://localhost:3010.
+
+## Layout
+
+```
+app/                 Next.js routes + global styles
+components/
+  ds/                design system (self-contained UI primitives)
+  ornithchat/        the app: chat, live trace, inspector, model manager
+electron/            desktop shell + native folder-picker IPC bridge
+scripts/             dev-desktop launcher, icon generator
+backend/             the Python sidecar (FastAPI + the Ornith agent)
+  server/main.py     SSE / chat / workspace / health endpoints
+  agent/ornith/      the thin self-scaffolding loop + 26 tools
+  requirements.txt
+  workspace/         the agent's sandbox (gitignored runtime data)
+docs/                design notes + project history
+```
+
+The Next.js app and the Python backend are fully decoupled — the UI talks to
+the backend only over HTTP (`:8000`), so each half runs, builds, and ships
+independently.
 
 ## Configuration (Ornith runtime knobs)
 
@@ -94,7 +116,7 @@ hardware, and each capability is one variable away.
 - Native OS folder picker via a context-isolated IPC bridge; packaged mode
   serves the static export from an in-process HTTP server.
 
-## The agent (`agent/p13-ornith` — what the UI drives)
+## The agent (`backend/agent/ornith` — what the UI drives)
 
 A deliberately thin loop built for ornith's self-scaffolding training (the
 model plans/retries/re-plans internally; external plan-execute-critic
@@ -119,7 +141,7 @@ Stop (arm `ORNITH_NUM_PREDICT` for a single-generation backstop).
 | Research | `web_search`, `wikipedia` (REST API), `browse_url`, `search_stackoverflow` |
 | GitHub | `github_search_repos`, `github_get_file`, `github_list_issues`, `github_create_issue`, `github_search_code` |
 | MCP | `mcp_read_multiple_files`, `mcp_directory_tree`, `mcp_search_files`, `mcp_get_file_info`, `mcp_move_file` — real Model Context Protocol filesystem server over stdio |
-| Memory | `remember`, `recall`, `list_memories`, `forget` — persists to `workspace/.memory/facts.json`, shared across sessions and harnesses |
+| Memory | `remember`, `recall`, `list_memories`, `forget` — persists to `backend/workspace/.memory/facts.json`, shared across sessions |
 | Delegation | `spawn_scout` — bounded recursive sub-agent for self-contained sub-tasks |
 
 ## API
@@ -131,7 +153,7 @@ Stop (arm `ORNITH_NUM_PREDICT` for a single-generation backstop).
   `scout_start` / `scout_done` / `error` / `done {answer, session_id}`.
   Events carry `depth` for nested-scout attribution.
 - `POST /chat` — same, non-streaming · `GET /harnesses` · `GET /health` ·
-  `GET /workspace/files` · sessions persist under `workspace/.sessions/`
+  `GET /workspace/files` · sessions persist under `backend/workspace/.sessions/`
 
 ## Known limitations (honest list)
 

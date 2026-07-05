@@ -40,7 +40,7 @@ export function Tabs({
 
   const focusAndSelect = (i: number) => {
     const v = values[(i + values.length) % values.length];
-    onChange && onChange(v);
+    onChange?.(v);
     // move DOM focus to the newly-active tab on the next tick (after re-render)
     requestAnimationFrame(() => {
       const el = document.getElementById(idBase ? `${idBase}-tab-${v}` : "");

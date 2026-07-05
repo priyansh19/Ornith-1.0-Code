@@ -17,8 +17,6 @@ export { Select } from "./Select";
 export type { SelectProps, SelectOption } from "./Select";
 export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
-export { Textarea } from "./Textarea";
-export type { TextareaProps } from "./Textarea";
 export { SegmentedToggle } from "./SegmentedToggle";
 export type { SegmentedToggleProps, SegmentedOption } from "./SegmentedToggle";
 
@@ -46,12 +44,6 @@ export { MessageBubble } from "./MessageBubble";
 export type { MessageBubbleProps, MessageRole } from "./MessageBubble";
 export { ToolCall } from "./ToolCall";
 export type { ToolCallProps, ToolItem, ToolItemKind } from "./ToolCall";
-export { ThinkingStep } from "./ThinkingStep";
-export type { ThinkingStepProps, ThinkingKind } from "./ThinkingStep";
-export { CritiqueCard } from "./CritiqueCard";
-export type { CritiqueCardProps, CritiqueSeverity } from "./CritiqueCard";
-export { SeverityBadge } from "./SeverityBadge";
-export type { SeverityBadgeProps, SeverityLevel } from "./SeverityBadge";
 
 export { Tabs } from "./Tabs";
 export type { TabsProps, Tab } from "./Tabs";
