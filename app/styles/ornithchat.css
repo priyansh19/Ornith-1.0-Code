@@ -319,6 +319,17 @@ html, body { height: 100%; overflow: hidden; }
 .lm-insp { display: flex; flex-direction: column; }
 .lm-dim { color: var(--muted); font-size: 13px; }
 
+/* ── Context-window meter (real token usage vs num_ctx) ── */
+.lm-ctx { margin-top: 10px; }
+.lm-ctx__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 5px; }
+.lm-ctx__label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+.lm-ctx__nums { font-family: var(--font-mono); font-size: 11px; color: var(--text-soft); }
+.lm-ctx__nums--hot { color: var(--amber); }
+.lm-ctx__bar { height: 6px; border-radius: var(--radius-pill); background: var(--surface); overflow: hidden; border: 1px solid var(--border); }
+.lm-ctx__fill { display: block; height: 100%; background: var(--brand); border-radius: var(--radius-pill); transition: width var(--dur-fast) var(--ease-out); }
+.lm-ctx__fill--hot { background: var(--amber); }
+.lm-ctx__foot { margin-top: 4px; font-family: var(--font-mono); font-size: 10px; color: var(--faint); }
+
 /* ── Workspace tab ── */
 .lm-ws { display: flex; flex-direction: column; }
 .lm-ws__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -428,6 +439,8 @@ html, body { height: 100%; overflow: hidden; }
 .lm-tr__main { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: transparent; border: none; cursor: pointer; padding: 5px 6px; border-radius: var(--radius-sm); color: var(--text-soft); }
 .lm-tr__main:hover { background: var(--surface-2); }
 .lm-tr__row.is-focus > .lm-tr__main { background: var(--agent-soft); box-shadow: inset 2px 0 0 var(--agent); }
+.lm-tr__row.is-error > .lm-tr__main { box-shadow: inset 2px 0 0 var(--red); }
+.lm-tr__row.is-error .lm-tr__icon { color: var(--red); }
 .lm-tr__chev { display: inline-flex; width: 12px; color: var(--faint); transition: transform var(--dur-fast) var(--ease-out); flex-shrink: 0; }
 .lm-tr__chev.is-open { transform: rotate(90deg); }
 .lm-tr__icon { display: inline-flex; color: var(--muted); flex-shrink: 0; }

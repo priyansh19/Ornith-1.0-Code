@@ -9,6 +9,10 @@ function formatDuration(ms?: number): string {
   return s < 1 ? "<1s" : `${Math.round(s)}s`;
 }
 
+/** Left indent (px) for a nested scout's steps, so a sub-agent's reasoning and
+    tool calls read as visually distinct from the top-level agent's. */
+const indentOf = (depth?: number) => (depth ? { marginLeft: depth * 16 } : undefined);
+
 function ThoughtBullet({
   step,
   isLive,
@@ -17,9 +21,12 @@ function ThoughtBullet({
   isLive: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
+  const isError = step.action === "error";
   return (
-    <div className="lm-step">
-      <span className="lm-step__dot lm-step__dot--thought" />
+    <div className="lm-step" style={indentOf(step.depth)}>
+      <span
+        className={`lm-step__dot ${isError ? "lm-step__dot--destructive" : "lm-step__dot--thought"}`}
+      />
       <div className="lm-step__body">
         <button
           type="button"
@@ -27,7 +34,9 @@ function ThoughtBullet({
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
         >
-          {isLive ? (
+          {isError ? (
+            "Agent error"
+          ) : isLive ? (
             <span className="lm-step__live">
               <span className="lm-step__spin" />
               Thinking…
@@ -42,7 +51,48 @@ function ThoughtBullet({
         {open && (
           <div className="lm-step__detail">
             {step.thought && <p className="lm-step__thought">{step.thought}</p>}
-            {step.action && <p className="lm-step__action">→ {step.action}</p>}
+            {step.action && step.action !== "error" && (
+              <p className="lm-step__action">→ {step.action}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** A nested sub-agent (spawn_scout) delegation: the mission handed off, and
+    (once it returns) the report. Always visible so the delegation boundary is
+    obvious in the feed. */
+function ScoutBullet({ step }: { step: Extract<Step, { type: "scout" }> }) {
+  const [open, setOpen] = React.useState(false);
+  const done = step.report !== undefined;
+  return (
+    <div className="lm-step" style={indentOf(Math.max(0, step.depth - 1))}>
+      <span className="lm-step__dot lm-step__dot--git" />
+      <div className="lm-step__body">
+        <button
+          type="button"
+          className="lm-step__summary lm-step__summary--tool"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
+          <strong>scout · depth {step.depth}</strong>
+          <span className="lm-step__input">{step.mission}</span>
+          {!done && (
+            <span className="lm-step__live">
+              <span className="lm-step__spin" />
+            </span>
+          )}
+          <span className={`lm-step__chev ${open ? "lm-step__chev--open" : ""}`}>
+            <Icon name="chevron-right" size={12} />
+          </span>
+        </button>
+        {open && (
+          <div className="lm-step__output">
+            <p className="lm-step__result">
+              {done ? step.report : "Delegated — running…"}
+            </p>
           </div>
         )}
       </div>
@@ -57,13 +107,15 @@ function ToolBullet({ step }: { step: Extract<Step, { type: "tool_result" }> }) 
   const [open, setOpen] = React.useState(false);
   const destructive = DESTRUCTIVE_TOOLS.has(step.tool);
   const isGit = GIT_TOOLS.has(step.tool);
-  const dotClass = destructive
+  const dotClass = step.isError
     ? "lm-step__dot--destructive"
-    : isGit
-      ? "lm-step__dot--git"
-      : "lm-step__dot--tool";
+    : destructive
+      ? "lm-step__dot--destructive"
+      : isGit
+        ? "lm-step__dot--git"
+        : "lm-step__dot--tool";
   return (
-    <div className="lm-step">
+    <div className="lm-step" style={indentOf(step.depth)}>
       <span className={`lm-step__dot ${dotClass}`} />
       <div className="lm-step__body">
         <button
@@ -74,7 +126,12 @@ function ToolBullet({ step }: { step: Extract<Step, { type: "tool_result" }> }) 
         >
           <strong>{step.tool}</strong>
           <span className="lm-step__input">{step.input}</span>
-          {destructive && (
+          {step.isError && (
+            <span className="lm-step__badge lm-step__badge--destructive">
+              failed
+            </span>
+          )}
+          {!step.isError && destructive && (
             <span className="lm-step__badge lm-step__badge--destructive">
               writes/executes
             </span>
@@ -115,8 +172,15 @@ export function StepTrace({ steps, running }: StepTraceProps) {
       {steps.map((s, i) => {
         const isLast = i === steps.length - 1;
         if (s.type === "thought")
-          return <ThoughtBullet key={i} step={s} isLive={running && isLast} />;
+          return (
+            <ThoughtBullet
+              key={i}
+              step={s}
+              isLive={running && isLast && s.action !== "error"}
+            />
+          );
         if (s.type === "tool_result") return <ToolBullet key={i} step={s} />;
+        if (s.type === "scout") return <ScoutBullet key={i} step={s} />;
         return null;
       })}
     </div>

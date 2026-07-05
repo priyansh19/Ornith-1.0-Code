@@ -34,12 +34,30 @@ export interface LiveSpanEvent {
   ms: number;
   tokens?: number;
   detail?: string;
+  /** structured tool I/O (read path/lines, shell cmd+exit, edit diff) — the
+      backend now populates this on tool spans so TraceTree's IOView renders. */
+  io?: Span["io"];
+  /** tool call failed (nonzero shell exit, or an Error result) */
+  isError?: boolean;
+  /** why the model's turn ended (Ollama done_reason: stop/length/load) */
+  doneReason?: string;
 }
 
 export type LiveEvent =
-  | { type: "thought"; round: number; thought?: string; action?: string }
-  | { type: "tool_result"; tool: string; input: string; result: string; diff?: string }
+  | { type: "thought"; round: number; thought?: string; action?: string; depth?: number }
+  // incremental answer tokens (depth 0) streamed from the model as it generates
+  | { type: "token"; round: number; text: string; depth?: number }
+  // incremental native-reasoning (<think>) tokens streamed from the model
+  | { type: "reasoning"; round: number; text: string; depth?: number }
+  // real per-round token usage → context meter (used vs num_ctx / 262144)
+  | { type: "context"; round: number; used: number; max: number; modelMax?: number; compacted?: number; depth?: number }
+  | { type: "tool_result"; tool: string; input: string; result: string; diff?: string; isError?: boolean; depth?: number }
   | { type: "span"; span: LiveSpanEvent }
+  // nested sub-agent (spawn_scout) delegation boundaries
+  | { type: "scout_start"; depth: number; mission: string }
+  | { type: "scout_done"; depth: number; report: string }
+  // a backend/model error mid-run (the run still ends with `done`)
+  | { type: "error"; round: number; message: string }
   | { type: "done"; answer: string; session_id: string };
 
 export async function checkServerHealth(signal?: AbortSignal): Promise<boolean> {
@@ -138,6 +156,9 @@ export function buildSpanTree(nodes: Map<string, LiveSpanEvent>): Span | null {
       ms: n.ms,
       tokens: n.tokens,
       detail: n.detail,
+      io: n.io,
+      isError: n.isError,
+      doneReason: n.doneReason,
     });
   }
 

@@ -28,6 +28,10 @@ _CHUNK_CHARS = 800
 
 # Consume-once diff slot — same pattern as p4/p7 (see agent/HARNESS_CHECKLIST.md).
 _LAST_DIFF = {"value": None}
+# Consume-once structured shell result slot (cmd + separate stdout/stderr +
+# exit code) so the agent loop can surface a failed command distinctly in the
+# trace instead of collapsing it into one string. Same consume-once pattern.
+_LAST_SHELL = {"value": None}
 
 
 def _load_memory() -> list:
@@ -244,6 +248,12 @@ _DESTRUCTIVE_PATTERNS = (
     "format ", "mkfs", "diskpart", "> /dev/", "shutil.rmtree",
 )
 
+def get_last_shell():
+    value = _LAST_SHELL["value"]
+    _LAST_SHELL["value"] = None
+    return value
+
+
 @tool
 def run_shell(command: str) -> str:
     """Run a shell command inside the workspace directory and return its stdout/stderr (15s timeout)."""
@@ -259,9 +269,22 @@ def run_shell(command: str) -> str:
         result = subprocess.run(
             command, shell=True, capture_output=True, text=True, timeout=15, cwd=WORKSPACE,
         )
-        return result.stdout or result.stderr or "No output."
     except Exception as e:
+        _LAST_SHELL["value"] = {"cmd": command, "stdout": "", "stderr": str(e), "exit": -1}
         return f"Error: {e}"
+    out, err, rc = result.stdout or "", result.stderr or "", result.returncode
+    # Record the structured result for the trace (exit code + separate streams)
+    # before collapsing to the string the model reads.
+    _LAST_SHELL["value"] = {"cmd": command, "stdout": out, "stderr": err, "exit": rc}
+    # Keep stderr even when stdout is non-empty (the old `stdout or stderr`
+    # silently dropped it), and prefix a nonzero exit so the model itself can
+    # tell the command failed.
+    body = out
+    if err:
+        body = f"{body}\n[stderr]\n{err}" if body else err
+    if not body:
+        body = "No output."
+    return f"[exit {rc}]\n{body}" if rc != 0 else body
 
 
 def _record_diff(filename: str, old_content: str, new_content: str) -> None:

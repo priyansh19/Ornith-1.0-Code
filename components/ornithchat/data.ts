@@ -37,6 +37,14 @@ export interface Insp {
   /** total wall-clock time of the last completed live run, set exactly once
       when the run's `done` (or failure/stop) lands. */
   runTotalMs?: number;
+  /** live context-window usage — real token counts from Ollama's response
+      metadata (prompt_eval_count + eval_count), updated each round. `ctxUsed`
+      is tokens in play last round; `ctxMax` is the configured num_ctx; and
+      `ctxModelMax` is Ornith's hard 262,144 ceiling. Drives the Inspector
+      context meter. */
+  ctxUsed?: number;
+  ctxMax?: number;
+  ctxModelMax?: number;
 }
 
 export interface ChatMessage {
@@ -88,6 +96,9 @@ export type Step =
           once the round completes (real per-round timing, not fake). */
       startedAt: number;
       durationMs?: number;
+      /** agent nesting depth (0 = top-level; >0 = a spawn_scout sub-agent) —
+          drives indentation so a scout's steps are visually distinct. */
+      depth?: number;
     }
   | {
       type: "tool_result";
@@ -95,6 +106,17 @@ export type Step =
       input: string;
       result: string;
       diff?: string;
+      /** the tool call failed (nonzero shell exit or an Error result). */
+      isError?: boolean;
+      depth?: number;
+    }
+  | {
+      /** a nested sub-agent (spawn_scout) delegation: the mission handed off,
+          then the report it returned. */
+      type: "scout";
+      depth: number;
+      mission: string;
+      report?: string;
     };
 
 export const isToolMessage = (m: Message): m is ToolMessage =>
@@ -108,7 +130,11 @@ function toolSearchText(m: ToolMessage): string {
     .join(" ");
   const steps = (m.steps ?? [])
     .map((st) =>
-      st.type === "thought" ? `${st.thought ?? ""} ${st.action ?? ""}` : `${st.tool} ${st.input}`,
+      st.type === "thought"
+        ? `${st.thought ?? ""} ${st.action ?? ""}`
+        : st.type === "scout"
+          ? `${st.mission} ${st.report ?? ""}`
+          : `${st.tool} ${st.input}`,
     )
     .join(" ");
   return `${m.summary ?? ""} ${items} ${steps}`;
@@ -230,10 +256,14 @@ export interface Span {
   type: SpanType;
   label: string;
   agent?: string;
-  ms: number; // duration for leaves; parents are computed from children
+  ms: number; // duration for leaves; parents are max(children span, own emitted ms)
   tokens?: number;
   detail?: string; // thought / observation / llm text
   io?: SpanIO;
+  /** the tool call failed (nonzero shell exit or an Error result) */
+  isError?: boolean;
+  /** why the model's turn ended (Ollama done_reason) — shown on llm spans */
+  doneReason?: string;
   children?: Span[];
 }
 
@@ -263,7 +293,12 @@ export function computeIntervals(root: Span): {
       const iv = walk(c);
       end = Math.max(end, iv.t0 + iv.ms);
     }
-    const iv = { t0: start, ms: end - start };
+    // A parent's duration is the greater of (its children's span) and its own
+    // backend-emitted wall-clock ms — the agent span carries a real elapsed
+    // time (agent.py) that INCLUDES inter-span gaps (tool marshaling, queue
+    // latency) the summed children miss, so honoring it keeps the waterfall
+    // total in step with the RunTimer instead of under-reporting.
+    const iv = { t0: start, ms: Math.max(end - start, s.ms || 0) };
     map[s.id] = iv;
     return iv;
   };

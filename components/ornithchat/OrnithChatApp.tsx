@@ -790,6 +790,20 @@ export function OrnithChatApp() {
     // out the previous thought's real elapsed time before appending the next
     // bullet — gives "Thought for Ns" a genuine per-round duration.
     const steps: Step[] = [];
+    // Accumulates the answer as it streams in token-by-token (depth-0 `token`
+    // events) so the reply bubble fills live; the terminal `done` event still
+    // sets the authoritative final text (and covers the non-streaming path).
+    let streamedAnswer = "";
+    // The current-round thought bullet for a given depth — reasoning deltas
+    // and the post-hoc full-reasoning `thought` event both target it, and the
+    // same-depth guard stops a scout's reasoning from merging into the
+    // parent's bullet.
+    const thoughtForRound = (round: number, depth: number) => {
+      const last = steps[steps.length - 1];
+      return last && last.type === "thought" && last.round === round && (last.depth ?? 0) === depth
+        ? last
+        : null;
+    };
     // Flat, id-keyed accumulator for the backend's span events — rebuilt into
     // a tree (buildSpanTree) each time a new one arrives, feeding the Trace
     // tab. Scoped to this one call, so a fresh run starts with an empty tree.
@@ -815,23 +829,49 @@ export function OrnithChatApp() {
       sid_backend,
       model,
       (evt) => {
-        if (evt.type === "thought") {
-          const last = steps[steps.length - 1];
-          if (last && last.type === "thought") {
-            // Consecutive thinking (no tool call between) collapses into ONE
-            // bullet instead of a stack of "Thought for Xs" rows — the text
-            // accumulates and the duration keeps running from the FIRST
-            // thought's start, so the final "Thought for Ns" is the true sum.
-            last.thought = [last.thought, evt.thought].filter(Boolean).join("\n\n");
-            last.action = evt.action ?? last.action;
-            last.round = evt.round;
+        if (evt.type === "reasoning") {
+          // Native <think> tokens streaming in — accumulate into the current
+          // round's thought bullet (same depth), creating it on first delta.
+          const depth = evt.depth ?? 0;
+          let st = thoughtForRound(evt.round, depth);
+          if (!st) {
+            st = { type: "thought", round: evt.round, thought: "", startedAt: Date.now(), depth };
+            steps.push(st);
+          }
+          st.thought = (st.thought ?? "") + evt.text;
+          patchSession(sid, (s) => ({
+            insp: { ...s.insp, status: "running", session: sid_backend, liveRound: evt.round },
+          }));
+          applySteps(true);
+        } else if (evt.type === "token") {
+          // Answer tokens (top-level only) fill the reply bubble live.
+          if ((evt.depth ?? 0) === 0) {
+            streamedAnswer += evt.text;
+            patchSession(sid, (s) => ({
+              messages: s.messages.map((m) =>
+                !isToolMessage(m) && m.role === "assistant" && m.pending
+                  ? { ...m, content: streamedAnswer }
+                  : m,
+              ),
+            }));
+          }
+        } else if (evt.type === "thought") {
+          const depth = evt.depth ?? 0;
+          const st = thoughtForRound(evt.round, depth);
+          if (evt.action === "think" && st) {
+            // Post-hoc full reasoning for a round whose reasoning already
+            // streamed as deltas — replace (dedupe), don't append.
+            st.thought = evt.thought ?? st.thought;
           } else {
+            // A first/only thought, or a distinct note (retry nudge, error) —
+            // its own bullet, same-depth so it never merges across agents.
             steps.push({
               type: "thought",
               round: evt.round,
               thought: evt.thought,
               action: evt.action,
               startedAt: Date.now(),
+              depth,
             });
           }
           patchSession(sid, (s) => ({
@@ -844,8 +884,34 @@ export function OrnithChatApp() {
             },
           }));
           applySteps(true);
+        } else if (evt.type === "context") {
+          // Real token usage from Ollama's metadata → the Inspector meter.
+          patchSession(sid, (s) => ({
+            insp: {
+              ...s.insp,
+              ctxUsed: evt.used,
+              ctxMax: evt.max,
+              ctxModelMax: evt.modelMax ?? s.insp.ctxModelMax,
+            },
+          }));
         } else if (evt.type === "tool_result") {
-          const prevThought = [...steps].reverse().find((st) => st.type === "thought");
+          const depth = evt.depth ?? 0;
+          // A top-level tool call means any answer text streamed this round was
+          // preamble, not the final reply — reset so only the LAST round's
+          // tokens remain in the bubble (the `done` event is authoritative).
+          if (depth === 0 && streamedAnswer) {
+            streamedAnswer = "";
+            patchSession(sid, (s) => ({
+              messages: s.messages.map((m) =>
+                !isToolMessage(m) && m.role === "assistant" && m.pending
+                  ? { ...m, content: "" }
+                  : m,
+              ),
+            }));
+          }
+          const prevThought = [...steps]
+            .reverse()
+            .find((st) => st.type === "thought" && (st.depth ?? 0) === depth);
           if (prevThought && prevThought.type === "thought" && prevThought.durationMs === undefined) {
             prevThought.durationMs = Date.now() - prevThought.startedAt;
           }
@@ -855,6 +921,30 @@ export function OrnithChatApp() {
             input: evt.input,
             result: evt.result,
             diff: evt.diff,
+            isError: evt.isError,
+            depth,
+          });
+          applySteps(true);
+        } else if (evt.type === "scout_start") {
+          // Nested sub-agent dispatch — a visible feed marker for the mission.
+          steps.push({ type: "scout", depth: evt.depth, mission: evt.mission });
+          applySteps(true);
+        } else if (evt.type === "scout_done") {
+          const sc = [...steps]
+            .reverse()
+            .find((st) => st.type === "scout" && st.depth === evt.depth && st.report === undefined);
+          if (sc && sc.type === "scout") sc.report = evt.report;
+          applySteps(true);
+        } else if (evt.type === "error") {
+          // Surface a mid-run backend/model error in the feed instead of
+          // silently dropping it (the run still ends with `done`).
+          steps.push({
+            type: "thought",
+            round: evt.round,
+            thought: `⚠️ ${evt.message}`,
+            action: "error",
+            startedAt: Date.now(),
+            depth: 0,
           });
           applySteps(true);
         } else if (evt.type === "span") {

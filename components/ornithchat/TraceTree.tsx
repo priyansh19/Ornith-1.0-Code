@@ -110,7 +110,7 @@ function SpanRow({ span, depth, total, intervals, open, toggle, focus }: RowProp
       <div
         className={`lm-tr__row lm-tr__row--${span.type} ${
           focus === span.id ? "is-focus" : ""
-        }`}
+        } ${span.isError ? "is-error" : ""}`}
         style={{ paddingLeft: 6 + depth * 14 }}
       >
         <button
@@ -130,6 +130,11 @@ function SpanRow({ span, depth, total, intervals, open, toggle, focus }: RowProp
           </span>
           {span.tokens != null && (
             <span className="lm-tr__tok">{span.tokens}t</span>
+          )}
+          {span.doneReason && span.doneReason !== "stop" && (
+            <span className="lm-tr__tok" title="Ollama done_reason">
+              {span.doneReason}
+            </span>
           )}
           <span className="lm-tr__ms">{Math.round(iv.ms)}ms</span>
         </button>
