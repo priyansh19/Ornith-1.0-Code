@@ -2,6 +2,19 @@ import * as React from "react";
 import { Button, IconButton, Tooltip, Icon } from "@/components/ds";
 import { isMac } from "./platform";
 import { NotificationBell, type NotificationItem } from "./NotificationBell";
+import { BACKEND_URL } from "./liveBackend";
+
+// The backend's ":port" (or host, if standard) shown in the server chip —
+// tracks NEXT_PUBLIC_BACKEND_URL so the label never lies about where the
+// agent server actually is.
+const BACKEND_LABEL = (() => {
+  try {
+    const u = new URL(BACKEND_URL);
+    return u.port ? `:${u.port}` : u.host;
+  } catch {
+    return ":8000";
+  }
+})();
 
 export interface TopBarProps {
   onOpenModels: () => void;
@@ -78,14 +91,16 @@ export function TopBar({
 
         <Tooltip
           label={
-            serverUp ? "Backend server running · uvicorn :8000" : "Server stopped"
+            serverUp
+              ? `Backend server running · uvicorn ${BACKEND_LABEL}`
+              : "Server stopped"
           }
           side="bottom"
         >
           <span className={`lm-server ${serverUp ? "lm-server--up" : ""}`}>
             <span className="lm-server__dot" />
             <span className="lm-server__word">server</span>
-            :8000
+            {BACKEND_LABEL}
           </span>
         </Tooltip>
 

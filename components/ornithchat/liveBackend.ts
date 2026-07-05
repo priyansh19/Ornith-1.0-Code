@@ -17,7 +17,11 @@
 
 import type { Span } from "./data";
 
-export const BACKEND_URL = "http://localhost:8000";
+// Points at the FastAPI agent server. Override with NEXT_PUBLIC_BACKEND_URL
+// (e.g. in .env.local) when the backend runs on a non-default port — Next
+// inlines NEXT_PUBLIC_* at build time, so this resolves in the browser.
+export const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 /** One flat node from the backend's span stream — parented by id, not nested.
     The UI assembles these into the nested `Span` tree shape TraceTree

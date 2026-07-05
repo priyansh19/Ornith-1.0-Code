@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Icon, IconButton, Tooltip } from "@/components/ds";
+import { BACKEND_URL } from "./liveBackend";
 
-const WORKSPACE_URL = "http://localhost:8000/workspace/files";
+const WORKSPACE_URL = `${BACKEND_URL}/workspace/files`;
 
 type Status = "loading" | "unavailable" | "malformed" | "ok";
 
